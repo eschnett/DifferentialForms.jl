@@ -132,6 +132,8 @@ R3 in 0:D
     @test a * ⋆x === ⋆(a * x)
 
     # exterior product: x ∧ y
+    @test ∧(x) === x
+
     if R1 + R2 <= D
         (x ∧ y)::Form{D,R1 + R2}
     end
@@ -154,6 +156,7 @@ R3 in 0:D
     end
 
     # regressive product: ⋆(x ∨ y) = ⋆x ∧ ⋆y
+    @test ∨(x) === x
     Rvee = D - ((D - R1) + (D - R2))
     if 0 <= Rvee <= D
         (x ∨ y)::Form{D,Rvee}
@@ -177,6 +180,7 @@ R3 in 0:D
     @test abs(y + y2) <= abs(y) + abs(y2) || abs(y + y2) ≈ abs(y) + abs(y2)
 
     # cross product: x × y = ⋆(x ∧ y)
+    @test ×(x) === x
     Rcross = D - (R1 + R2)
     if 0 <= Rcross
         (x × y)::Form{D,Rcross}

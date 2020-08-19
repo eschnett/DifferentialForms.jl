@@ -477,6 +477,7 @@ export wedge
         Form{D,$R,$U}(SVector{$N,$U}($(makesum.(elts)...)))
     end
 end
+wedge(x::Form) = x
 export ∧
 const ∧ = wedge
 
@@ -490,6 +491,7 @@ Regressive product: `⋆(x ∨ y) = ⋆x ∧ ⋆y`
 vee
 export vee
 vee(x1::Form, x2::Form) = inv(⋆)(⋆x1 ∧ ⋆x2)
+vee(x::Form) = x
 export ∨
 const ∨ = vee
 
@@ -514,6 +516,7 @@ Dot product: `x × y = ⋆(x ∧ y)`
 (Inspired by Grassmann.jl)
 """
 LinearAlgebra.cross(x1::Form, x2::Form) = ⋆(x1 ∧ x2)
+LinearAlgebra.cross(x::Form) = x
 export cross, ×
 
 end
