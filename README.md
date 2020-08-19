@@ -22,8 +22,8 @@ product](https://en.wikipedia.org/wiki/Exterior_algebra#Inner_product)
 antisymmetrized tensor product, as well as a [hodge
 dual](https://en.wikipedia.org/wiki/Hodge_star_operator) (written
 `⋆x`, a prefix star operator). Calculating these two operations
-efficiently is not trivial, and is the main contribution of this
-package.
+efficiently for arbitrary dimensions and ranks is not trivial, and is
+the main contribution of this package.
 
 ## Examples
 
@@ -134,3 +134,7 @@ true
 This package draws inspiration from
 [Grassmann.jl](https://github.com/chakravala/Grassmann.jl), which
 includes similar functionality.
+
+[DiscreteDifferentialGeometry.jl](https://github.com/digitaldomain/DiscreteDifferentialGeometry.jl)
+also provides similar functionality, but only for two-dimensional
+meshes.
