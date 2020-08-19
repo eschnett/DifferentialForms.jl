@@ -39,4 +39,58 @@ function sort_perm(xs::SVector{D}) where {D}
     return rs, s
 end
 
+# Using mergesort, which is probably overkill and slower
+# sort_perm(xs::SVector{0}) = xs, false
+# sort_perm(xs::SVector{1}) = xs, false
+# function sort_perm(xs::SVector{2})
+#     if xs[1] <= xs[2]
+#         xs, false
+#     else
+#         reverse(xs), true
+#     end
+# end
+# function sort_perm(xs::SVector{D}) where D
+#     @assert D >= 2
+#     D1 = prevpow(2, D)
+#     @assert 1 <= D1 < D
+#     D2 = D - D1
+#     @assert 1 <= D2
+#     xs1 = xs[StaticArrays.SUnitRange(1, D1)]
+#     xs2 = xs[StaticArrays.SUnitRange(D1+1, D2)]
+#     rs1, s1 = sort_perm(xs1)
+#     rs2, s2 = sort_perm(xs2)
+#     i1 = 1
+#     i2 = 1
+#     rs = xs                     # should be undefined
+#     for i in 1:D
+#         if rs1[i1] < rs2[i2]
+#             rs = setindex(rs, rs1[i1], i)
+#             i1 += 1
+#             if i1 == D
+#                 for j in i+1:D
+#                     rs = setindex(rs, rs2[i2], j)
+#                     i2 += 1
+#                 end
+#                 break
+#             end
+#         else
+#             rs = setindex(rs, rs2[i2], i)
+#             i2 += 1
+#             if i2 == D
+#                 for j in i+1:D
+#                     rs = setindex(rs, rs1[i1], j)
+#                     i1 += 1
+#                 end
+#                 break
+#             end
+#         end
+#     end
+#     
+#     @assert i1 == D1
+#     @assert i2 == D2
+#     @assert i == D
+#     @assert issorted(rs)
+#     rs, s
+# end
+
 end
