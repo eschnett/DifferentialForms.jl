@@ -106,13 +106,30 @@ R3 in 0:D
 
     # Multiplicative structure
 
+    # units
+    if D == 2
+        e1 = unit(Form{D,1,T}, 1)
+        e2 = unit(Form{D,1,T}, 2)
+        e12 = unit(Form{D,2,T}, 1)
+        @test ⋆e1 === e2
+        @test ⋆e2 === -e1
+        @test e1 ∧ e1 === 0 * e12
+        @test e2 ∧ e2 === 0 * e12
+        @test e1 ∧ e2 === e12
+    end
+
     # various duals
     @test ~~x === x
+    @test a * ~x === ~(a * x)
+
     @test conj(conj(x)) === x
+    @test a * conj(x) === conj(a * x)
+
     @test ⋆⋆x === bitsign(R1 * (D - R1)) * x
     @test inv(⋆)(⋆x) === x
     @test ⋆inv(⋆)(x) === x
     @test ⋆⋆ ⋆ ⋆x === x
+    @test a * ⋆x === ⋆(a * x)
 
     # exterior product: x ∧ y
     if R1 + R2 <= D
@@ -149,6 +166,15 @@ R3 in 0:D
         (x ⋅ y)::Form{D,Rdot}
         @test x ⋅ y === x ∨ ⋆y
     end
+
+    abs2(x)::T
+    @test abs2(x) >= 0
+    @test abs2(a * x) == abs2(a) * abs2(x)
+    # @test abs2(y + y2) <= abs2(y) + abs2(y2)
+    abs(x)::typeof(sqrt(one(T)))
+    @test abs(x) ≈ sqrt(abs2(x))
+    @test abs(a * x) ≈ abs(a) * abs(x)
+    @test abs(y + y2) <= abs(y) + abs(y2) || abs(y + y2) ≈ abs(y) + abs(y2)
 
     # cross product: x × y = ⋆(x ∧ y)
     Rcross = D - (R1 + R2)

@@ -503,6 +503,9 @@ Dot product: `x ⋅ y = x ∧ ⋆y`
 LinearAlgebra.dot(x1::Form, x2::Form) = x1 ∨ ⋆x2
 export dot, ⋅
 
+Base.abs2(x::Form) = (x ⋅ x)[]
+Base.abs(x::Form) = sqrt(abs2(x))
+
 """
     cross(x, y)
     x × y   (typed: \\times<tab>)
