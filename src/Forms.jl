@@ -81,8 +81,6 @@ function Form{D,R}(tup::Tuple) where {D,R}
     return Form{D,R}(SVector{N}(tup))
 end
 
-export Fun
-struct Fun end
 @generated function Form{D,R,T}(fun::Function) where {D,R,T}
     N = binomial(D, R)
     return quote
