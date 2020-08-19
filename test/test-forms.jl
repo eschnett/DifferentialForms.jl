@@ -140,6 +140,8 @@ R3 in 0:D
 
     if R1 + R2 + R3 <= D
         @test (x ∧ y) ∧ z === x ∧ (y ∧ z)
+        @test x ∧ y ∧ z === (x ∧ y) ∧ z
+        @test ∧(x, y, z) === (x ∧ y) ∧ z
     end
 
     @test e ∧ x === x
@@ -163,6 +165,14 @@ R3 in 0:D
         @test ⋆(x ∨ y) === ⋆x ∧ ⋆y
     end
 
+    Rvee3 = D - ((D - R1) + (D - R2) + (D - R3))
+    if 0 <= Rvee3 <= D
+        (x ∨ y ∨ z)::Form{D,Rvee3}
+        @test ⋆(x ∨ y ∨ z) === ⋆x ∧ ⋆y ∧ ⋆z
+        @test x ∨ y ∨ z === (x ∨ y) ∨ z
+        @test ∨(x, y, z) === (x ∨ y) ∨ z
+    end
+
     # dot product: x ⋅ y = x ∨ ⋆y   (right contraction)
     Rdot = D - ((D - R1) + R2)
     if 0 <= Rdot <= D
@@ -180,7 +190,6 @@ R3 in 0:D
     @test abs(y + y2) <= abs(y) + abs(y2) || abs(y + y2) ≈ abs(y) + abs(y2)
 
     # cross product: x × y = ⋆(x ∧ y)
-    @test ×(x) === x
     Rcross = D - (R1 + R2)
     if 0 <= Rcross
         (x × y)::Form{D,Rcross}

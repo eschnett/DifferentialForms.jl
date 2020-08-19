@@ -478,6 +478,7 @@ export wedge
     end
 end
 wedge(x::Form) = x
+wedge(x1::Form, x2::Form, x3s::Form...) = wedge(wedge(x1, x2), x3s...)
 export ∧
 const ∧ = wedge
 
@@ -492,6 +493,7 @@ vee
 export vee
 vee(x1::Form, x2::Form) = inv(⋆)(⋆x1 ∧ ⋆x2)
 vee(x::Form) = x
+vee(x1::Form, x2::Form, x3s::Form...) = vee(vee(x1, x2), x3s...)
 export ∨
 const ∨ = vee
 
@@ -516,7 +518,6 @@ Dot product: `x × y = ⋆(x ∧ y)`
 (Inspired by Grassmann.jl)
 """
 LinearAlgebra.cross(x1::Form, x2::Form) = ⋆(x1 ∧ x2)
-LinearAlgebra.cross(x::Form) = x
 export cross, ×
 
 end
