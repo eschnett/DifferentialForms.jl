@@ -4,7 +4,7 @@ using LinearAlgebra
 using StaticArrays
 using Test
 
-@testset "Create form D=$D R=$R" for D in 0:Dmax, R in 0:D
+@testset "Create forms D=$D R=$R" for D in 0:Dmax, R in 0:D
     T = BigRat
 
     N = binomial(Val(D), Val(R))
@@ -33,7 +33,7 @@ using Test
     Form{D,R,T}(arr)
 end
 
-@testset "Form vector space operations D=$D R=$R" for D in 0:Dmax, R in 0:D
+@testset "Vector space operations on forms D=$D R=$R" for D in 0:Dmax, R in 0:D
     # Using === instead of == for comparisons to catch wrong types
     T = Rational{Int64}
     n = zero(Form{D,R,T})
@@ -220,8 +220,61 @@ end
     end
 end
 
+const Dmax4 = min(4, Dmax)
+@testset "Tensor sums of forms D1=$D1 D2=$D2 R=$R" for D1 in 0:Dmax4,
+D2 in 0:Dmax4,
+R in 1:min(D1, D2)
+
+    D = D1 + D2
+
+    T = Rational{Int64}
+    x = rand(Form{D1,R,T})
+    x2 = rand(Form{D1,R,T})
+    y = rand(Form{D2,R,T})
+    y2 = rand(Form{D2,R,T})
+    a = rand(T)
+
+    # units
+    if D1 == 1 && D2 == 1 && R == 1
+        u(d, inds...) = unit(Form{d,length(inds),T}, inds...)
+
+        @test u(1, 1) ⊕ u(1, 1) === u(2, 1) + u(2, 2)
+
+        @test u(1, 1) ⊕ u(2, 1) === u(3, 1) + u(3, 2)
+        @test u(1, 1) ⊕ u(2, 2) === u(3, 1) + u(3, 3)
+
+        @test u(3, 1) ⊕ u(2, 1) === u(5, 1) + u(5, 4)
+        @test u(3, 1) ⊕ u(2, 2) === u(5, 1) + u(5, 5)
+        @test u(3, 2) ⊕ u(2, 1) === u(5, 2) + u(5, 4)
+        @test u(3, 2) ⊕ u(2, 2) === u(5, 2) + u(5, 5)
+        @test u(3, 3) ⊕ u(2, 1) === u(5, 3) + u(5, 4)
+        @test u(3, 3) ⊕ u(2, 2) === u(5, 3) + u(5, 5)
+    end
+
+    @test ⊕(x) === x
+    @test a * ⊕(x) === ⊕(a * x)
+
+    (x ⊕ y)::Form{D,R,T}
+    @test a * (x ⊕ y) === (a * x) ⊕ (a * y)
+    @test (x ⊕ y) * a === (x * a) ⊕ (y * a)
+    @test x ⊕ y === (zero(x) ⊕ y) + (x ⊕ zero(y))
+    @test (x + x2) ⊕ (y + y2) === (x ⊕ y) + (x2 ⊕ y2)
+
+    @test reverse_basis(x ⊕ y) ===
+          # bitsign(R * R) * 
+          (reverse_basis(y) ⊕ reverse_basis(x))
+
+    for D3 in R:Dmax4
+        z = rand(Form{D3,R,T})
+        @test (x ⊕ y) ⊕ z === x ⊕ (y ⊕ z)
+        @test x ⊕ y ⊕ z === x ⊕ (y ⊕ z)
+        @test ⊕(x, y, z) === x ⊕ (y ⊕ z)
+    end
+end
+
 const Dmax3 = min(3, Dmax)
-@testset "Form tensor products D1=$D1 R1=$R1 D2=$D2 R2=$R2" for D1 in 0:Dmax3,
+@testset "Tensor products of forms D1=$D1 R1=$R1 D2=$D2 R2=$R2" for D1 in
+                                                                    0:Dmax3,
 D2 in 0:Dmax3,
 R1 in 0:D1,
 R2 in 0:D2
@@ -254,15 +307,6 @@ R2 in 0:D2
         @test u(1, 1) ⊗ u(2, 2) === u(3, 1, 3)
         @test u(1) ⊗ u(2, 1, 2) === u(3, 2, 3)
         @test u(1, 1) ⊗ u(2, 1, 2) === u(3, 1, 2, 3)
-
-        @test u(1) ⊗ u(2) === u(3)
-        @test u(1, 1) ⊗ u(2) === u(3, 1)
-        @test u(1) ⊗ u(2, 1) === u(3, 2)
-        @test u(1, 1) ⊗ u(2, 1) === u(3, 1, 2)
-        @test u(1) ⊗ u(2, 2) === u(3, 3)
-        @test u(1, 1) ⊗ u(2, 2) === u(3, 1, 3)
-        @test u(1) ⊗ u(2, 1, 2) === u(3, 2, 3)
-        @test u(1, 1) ⊗ u(2, 1, 2) === u(3, 1, 2, 3)
     end
 
     @test ⊗(x) === x
@@ -285,5 +329,4 @@ R2 in 0:D2
         @test x ⊗ y ⊗ z === x ⊗ (y ⊗ z)
         @test ⊗(x, y, z) === x ⊗ (y ⊗ z)
     end
-
 end

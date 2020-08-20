@@ -592,6 +592,48 @@ export cross, ×
 ################################################################################
 
 """
+    tensorsum(x, y)
+    x ⊕ y   (typed: \\oplus<tab>)
+
+Tensor sum
+"""
+tensorsum
+@generated function tensorsum(x1::Form{D1,R}, x2::Form{D2,R}) where {D1,D2,R}
+    @assert 0 < R <= D1
+    @assert 0 < R <= D2
+    D = D1 + D2
+    U = typeof(zero(eltype(x1)) + zero(eltype(x2)))
+    N = binomial(D, R)
+    elts = Any[nothing for n in 1:N]
+    for n in 1:N
+        bitsr = lin2bit(Val(D), Val(R), n)
+        bits1 = SVector{D1,Bool}(bitsr[1:D1])
+        bits2 = SVector{D2,Bool}(bitsr[(D1 + 1):end])
+        n1 = bit2lin(Val(D1), Val(R), bits1)
+        n2 = bit2lin(Val(D2), Val(R), bits2)
+        if n1 > 0
+            @assert n2 == 0
+            elts[n] = :(x1[$n1])
+        elseif n2 > 0
+            @assert n1 == 0
+            elts[n] = :(x2[$n2])
+        else
+            elts[n] = :(zero($U))
+        end
+    end
+    @assert !any(==(nothing), elts)
+    return quote
+        Form{$D,$R,$U}(SVector{$N,$U}($(elts...)))
+    end
+end
+tensorsum(x::Form) = x
+function tensorsum(x1::Form, x2::Form, x3s::Form...)
+    return tensorsum(tensorsum(x1, x2), x3s...)
+end
+const ⊕ = tensorsum
+export tensorsum, ⊕
+
+"""
     tensorproduct(x, y)
     x ⊗ y   (typed: \\otimes<tab>)
 
