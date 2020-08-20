@@ -338,9 +338,21 @@ end
 Base.zeros(::Type{<:Form{D,R}}) where {D,R} = zeros(Form{D,R,Float64})
 Base.zeros(x::Form) = zeros(typeof(x))
 
-function Defs.unit(::Type{<:Form{D,R,T}}, ind) where {D,R,T}
+function Defs.unit(::Type{<:Form{D,R,T}}, ind::Integer) where {D,R,T}
     return setindex(zero(Form{D,R,T}), one(T), ind)
 end
+function Defs.unit(::Type{<:Form{D,R}}, ind::Integer) where {D,R}
+    return unit(Form{D,R,Float64}, ind)
+end
+function Defs.unit(::Type{<:Form{D,R,T}}, inds::SVector{R}) where {D,R,T}
+    return setindex(zero(Form{D,R,T}), one(T), inds)
+end
+function Defs.unit(::Type{<:Form{D,R}}, inds::SVector{R}) where {D,R}
+    return unit(Form{D,R,Float64}, inds)
+end
+Defs.unit(F::Type{<:Form}, inds::Tuple{}) = unit(F, SVector{0,Int}())
+Defs.unit(F::Type{<:Form}, inds::Tuple) = unit(F, SVector(inds))
+Defs.unit(F::Type{<:Form}, inds::Integer...) = unit(F, inds)
 
 Base.:+(x::Form{D,R}) where {D,R} = Form{D,R}(+x.elts)
 Base.:-(x::Form{D,R}) where {D,R} = Form{D,R}(-x.elts)
@@ -350,6 +362,8 @@ Base.:*(x::Form{D,R}, a) where {D,R} = Form{D,R}(x.elts * a)
 Base.:/(x::Form{D,R}, a) where {D,R} = Form{D,R}(x.elts / a)
 Base.:*(a, x::Form{D,R}) where {D,R} = Form{D,R}(a * x.elts)
 Base.:\(a, x::Form{D,R}) where {D,R} = Form{D,R}(a \ x.elts)
+
+################################################################################
 
 # Forms form an algebra
 
@@ -368,9 +382,63 @@ Base.one(x::Form) = one(typeof(x))
 Reverse
 """
 reverse
-Base.reverse(x::Form{D,R}) where {D,R} = bitsign(R * (R + 1) ÷ 2) * x
+Base.reverse(x::Form{D,R}) where {D,R} = bitsign((R - 1) * R ÷ 2) * x
 Base.:~(x::Form) = reverse(x)
 Base.inv(::typeof(~)) = ~
+
+"""
+    cycle_basis(x)
+
+Cycle basis: `e_i => e_{i+1}`
+"""
+cycle_basis
+@generated function cycle_basis(x1::Form{D,R}) where {D,R}
+    @assert 0 <= R <= D
+    U = typeof(one(eltype(x1)))
+    N = binomial(D, R)
+    elts = Any[nothing for n in 1:N]
+    for n1 in 1:length(x1)
+        lst1 = lin2lst(Val(D), Val(R), n1)
+        lstr0 = mod1.((lst1 .+ 1), D)
+        lstr, parity = sort_perm(lstr0)
+        s = bitsign(parity)
+        op = s > 0 ? :+ : :-
+        ind = lst2lin(Val(D), Val(R), lstr)
+        elts[ind] = :($op(x1[$n1]))
+    end
+    @assert !any(==(nothing), elts)
+    return quote
+        Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
+    end
+end
+export cycle_basis
+
+"""
+    reverse_basis(x)
+
+Reverse basis: `e_i => e_{D+1-i}`
+"""
+reverse_basis
+@generated function reverse_basis(x1::Form{D,R}) where {D,R}
+    @assert 0 <= R <= D
+    U = typeof(one(eltype(x1)))
+    N = binomial(D, R)
+    elts = Any[nothing for n in 1:N]
+    for n1 in 1:length(x1)
+        lst1 = lin2lst(Val(D), Val(R), n1)
+        lstr0 = (D + 1) .- lst1
+        lstr, parity = sort_perm(lstr0)
+        s = bitsign(parity)
+        op = s > 0 ? :+ : :-
+        ind = lst2lin(Val(D), Val(R), lstr)
+        elts[ind] = :($op(x1[$n1]))
+    end
+    @assert !any(==(nothing), elts)
+    return quote
+        Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
+    end
+end
+export reverse_basis
 
 """
     hodge(x)
@@ -385,7 +453,7 @@ hodge
     @assert 0 <= R <= D
     U = typeof(one(eltype(x1)))
     N = binomial(D, R)
-    elts = Any[:(zero($U)) for n in 1:N]
+    elts = Any[nothing for n in 1:N]
     for n1 in 1:length(x1)
         bits1 = lin2bit(Val(D), Val(R1), n1)
         bitsr = .~bits1
@@ -398,6 +466,7 @@ hodge
         ind = bit2lin(Val(D), Val(R), bitsr)
         elts[ind] = :($op(x1[$n1]))
     end
+    @assert !any(==(nothing), elts)
     return quote
         Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
     end
@@ -421,7 +490,7 @@ invhodge
         bits1 = lin2bit(Val(D), Val(R1), n1)
         bitsr = .~bits1
         # The "opposite" parity as `hodge`
-        _, parity = sort_perm(SVector{R1 + R,Int}(bit2lst(Val(D), Val(R),
+        _, parity = sort_perm(SVector{R + R1,Int}(bit2lst(Val(D), Val(R),
                                                           bitsr)...,
                                                   bit2lst(Val(D), Val(R1),
                                                           bits1)...))
@@ -519,5 +588,45 @@ Dot product: `x × y = ⋆(x ∧ y)`
 """
 LinearAlgebra.cross(x1::Form, x2::Form) = ⋆(x1 ∧ x2)
 export cross, ×
+
+################################################################################
+
+"""
+    tensorproduct(x, y)
+    x ⊗ y   (typed: \\otimes<tab>)
+
+Tensor product
+"""
+tensorproduct
+@generated function tensorproduct(x1::Form{D1,R1},
+                                  x2::Form{D2,R2}) where {D1,R1,D2,R2}
+    @assert 0 <= R1 <= D1
+    @assert 0 <= R2 <= D2
+    D = D1 + D2
+    R = R1 + R2
+    U = typeof(zero(eltype(x1)) + zero(eltype(x2)))
+    N = binomial(D, R)
+    elts = [Any[] for n in 1:N]
+    for n1 in 1:length(x1), n2 in 1:length(x2)
+        bits1 = lin2bit(Val(D1), Val(R1), n1)
+        bits2 = lin2bit(Val(D2), Val(R2), n2)
+        bitsr = SVector{D,Bool}(bits2..., bits1...)
+        ind = bit2lin(Val(D), Val(R), bitsr)
+        push!(elts[ind], :(x1[$n1] * x2[$n2]))
+    end
+    function makesum(elt)
+        isempty(elt) && return :(zero($U))
+        return :(+($(elt...)))
+    end
+    return quote
+        Form{$D,$R,$U}(SVector{$N,$U}($(makesum.(elts)...)))
+    end
+end
+tensorproduct(x::Form) = x
+function tensorproduct(x1::Form, x2::Form, x3s::Form...)
+    return tensorproduct(tensorproduct(x1, x2), x3s...)
+end
+const ⊗ = tensorproduct
+export tensorproduct, ⊗
 
 end

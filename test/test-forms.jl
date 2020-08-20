@@ -33,7 +33,7 @@ using Test
     Form{D,R,T}(arr)
 end
 
-@testset "Form D=$D R=$R" for D in 0:Dmax, R in 0:D
+@testset "Form vector space operations D=$D R=$R" for D in 0:Dmax, R in 0:D
     # Using === instead of == for comparisons to catch wrong types
     T = Rational{Int64}
     n = zero(Form{D,R,T})
@@ -90,17 +90,13 @@ end
     @test map(+, x, y, z) === x + y + z
 end
 
-@testset "Form D=$D R1=$R1 R2=$R2 R3=$R3" for D in 0:Dmax,
-R1 in 0:D,
-R2 in 0:D,
-R3 in 0:D
+@testset "Form algebra D=$D R1=$R1 R2=$R2" for D in 0:Dmax, R1 in 0:D, R2 in 0:D
     # Using === instead of == for comparisons to catch wrong types
     T = Rational{Int64}
     e = one(Form{D,0,T})
     x = rand(Form{D,R1,T})
     y = rand(Form{D,R2,T})
     y2 = rand(Form{D,R2,T})
-    z = rand(Form{D,R3,T})
     a = rand(T)
     b = rand(T)
 
@@ -108,17 +104,38 @@ R3 in 0:D
 
     # units
     if D == 2
+        e = unit(Form{D,0,T})
         e1 = unit(Form{D,1,T}, 1)
         e2 = unit(Form{D,1,T}, 2)
-        e12 = unit(Form{D,2,T}, 1)
+        e12 = unit(Form{D,2,T}, 1, 2)
+        @test ~e === e
+        @test ~e1 === e1
+        @test ~e2 === e2
+        @test ~e12 === -e12
+        @test ⋆e === e12
         @test ⋆e1 === e2
         @test ⋆e2 === -e1
+        @test ⋆e12 === e
+        @test e ∧ e === e
+        @test e ∧ e1 === e1
+        @test e ∧ e2 === e2
+        @test e ∧ e12 === e12
         @test e1 ∧ e1 === 0 * e12
         @test e2 ∧ e2 === 0 * e12
         @test e1 ∧ e2 === e12
     end
 
     # various duals
+    cycle_basis(x)::typeof(x)
+    x′ = x
+    for d in 1:D
+        x′ = cycle_basis(x′)
+    end
+    @test x′ === x
+    reverse_basis(x)::typeof(x)
+    @test reverse_basis(reverse_basis(x)) === x
+    @test reverse_basis(cycle_basis(reverse_basis(cycle_basis(x)))) === x
+
     @test ~~x === x
     @test a * ~x === ~(a * x)
 
@@ -138,10 +155,13 @@ R3 in 0:D
         (x ∧ y)::Form{D,R1 + R2}
     end
 
-    if R1 + R2 + R3 <= D
-        @test (x ∧ y) ∧ z === x ∧ (y ∧ z)
-        @test x ∧ y ∧ z === (x ∧ y) ∧ z
-        @test ∧(x, y, z) === (x ∧ y) ∧ z
+    for R3 in 0:D
+        z = rand(Form{D,R3,T})
+        if R1 + R2 + R3 <= D
+            @test (x ∧ y) ∧ z === x ∧ (y ∧ z)
+            @test x ∧ y ∧ z === (x ∧ y) ∧ z
+            @test ∧(x, y, z) === (x ∧ y) ∧ z
+        end
     end
 
     @test e ∧ x === x
@@ -165,12 +185,15 @@ R3 in 0:D
         @test ⋆(x ∨ y) === ⋆x ∧ ⋆y
     end
 
-    Rvee3 = D - ((D - R1) + (D - R2) + (D - R3))
-    if 0 <= Rvee3 <= D
-        (x ∨ y ∨ z)::Form{D,Rvee3}
-        @test ⋆(x ∨ y ∨ z) === ⋆x ∧ ⋆y ∧ ⋆z
-        @test x ∨ y ∨ z === (x ∨ y) ∨ z
-        @test ∨(x, y, z) === (x ∨ y) ∨ z
+    for R3 in 0:D
+        z = rand(Form{D,R3,T})
+        Rvee3 = D - ((D - R1) + (D - R2) + (D - R3))
+        if 0 <= Rvee3 <= D
+            (x ∨ y ∨ z)::Form{D,Rvee3}
+            @test ⋆(x ∨ y ∨ z) === ⋆x ∧ ⋆y ∧ ⋆z
+            @test x ∨ y ∨ z === (x ∨ y) ∨ z
+            @test ∨(x, y, z) === (x ∨ y) ∨ z
+        end
     end
 
     # dot product: x ⋅ y = x ∨ ⋆y   (right contraction)
@@ -195,4 +218,44 @@ R3 in 0:D
         (x × y)::Form{D,Rcross}
         @test x × y === ⋆(x ∧ y)
     end
+end
+
+const Dmax3 = min(3, Dmax)
+@testset "Form tensor products D1=$D1 R1=$R1 D2=$D2 R2=$R2" for D1 in 0:Dmax3,
+D2 in 0:Dmax3,
+R1 in 0:D1,
+R2 in 0:D2
+
+    D = D1 + D2
+    R = R1 + R2
+
+    T = Rational{Int64}
+    e = one(Form{0,0,T})
+    x = rand(Form{D1,R1,T})
+    x2 = rand(Form{D1,R1,T})
+    y = rand(Form{D2,R2,T})
+    y2 = rand(Form{D2,R2,T})
+    a = rand(T)
+
+    @test ⊗(x) === x
+    @test a * ⊗(x) === ⊗(a * x)
+
+    (x ⊗ y)::Form{D,R,T}
+    @test a * (x ⊗ y) === (a * x) ⊗ y
+    @test (x ⊗ y) * a === x ⊗ (y * a)
+    @test e ⊗ y === y
+    @test x ⊗ e === x
+    @test (x + x2) ⊗ y === x ⊗ y + x2 ⊗ y
+    @test x ⊗ (y + y2) === x ⊗ y + x ⊗ y2
+
+    @test reverse_basis(x ⊗ y) ===
+          bitsign(R1 * R2) * (reverse_basis(y) ⊗ reverse_basis(x))
+
+    for D3 in 0:Dmax3, R3 in 0:D3
+        z = rand(Form{D3,R3,T})
+        @test (x ⊗ y) ⊗ z === x ⊗ (y ⊗ z)
+        @test x ⊗ y ⊗ z === x ⊗ (y ⊗ z)
+        @test ⊗(x, y, z) === x ⊗ (y ⊗ z)
+    end
+
 end
