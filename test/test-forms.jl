@@ -103,7 +103,7 @@ end
     # Multiplicative structure
 
     # units
-    if D == 2
+    if D == 2 && R1 == 1 && R2 == 1
         e = unit(Form{D,0,T})
         e1 = unit(Form{D,1,T}, 1)
         e2 = unit(Form{D,1,T}, 2)
@@ -236,6 +236,34 @@ R2 in 0:D2
     y = rand(Form{D2,R2,T})
     y2 = rand(Form{D2,R2,T})
     a = rand(T)
+
+    # units
+    if D1 == 1 && D2 == 1 && R1 == 1 && R2 == 1
+        u(d, inds...) = unit(Form{d,length(inds),T}, inds...)
+
+        @test u(1) ⊗ u(1) === u(2)
+        @test u(1, 1) ⊗ u(1) === u(2, 1)
+        @test u(1) ⊗ u(1, 1) === u(2, 2)
+        @test u(1, 1) ⊗ u(1, 1) === u(2, 1, 2)
+
+        @test u(1) ⊗ u(2) === u(3)
+        @test u(1, 1) ⊗ u(2) === u(3, 1)
+        @test u(1) ⊗ u(2, 1) === u(3, 2)
+        @test u(1, 1) ⊗ u(2, 1) === u(3, 1, 2)
+        @test u(1) ⊗ u(2, 2) === u(3, 3)
+        @test u(1, 1) ⊗ u(2, 2) === u(3, 1, 3)
+        @test u(1) ⊗ u(2, 1, 2) === u(3, 2, 3)
+        @test u(1, 1) ⊗ u(2, 1, 2) === u(3, 1, 2, 3)
+
+        @test u(1) ⊗ u(2) === u(3)
+        @test u(1, 1) ⊗ u(2) === u(3, 1)
+        @test u(1) ⊗ u(2, 1) === u(3, 2)
+        @test u(1, 1) ⊗ u(2, 1) === u(3, 1, 2)
+        @test u(1) ⊗ u(2, 2) === u(3, 3)
+        @test u(1, 1) ⊗ u(2, 2) === u(3, 1, 3)
+        @test u(1) ⊗ u(2, 1, 2) === u(3, 2, 3)
+        @test u(1, 1) ⊗ u(2, 1, 2) === u(3, 1, 2, 3)
+    end
 
     @test ⊗(x) === x
     @test a * ⊗(x) === ⊗(a * x)

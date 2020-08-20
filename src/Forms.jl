@@ -606,20 +606,22 @@ tensorproduct
     R = R1 + R2
     U = typeof(zero(eltype(x1)) + zero(eltype(x2)))
     N = binomial(D, R)
-    elts = [Any[] for n in 1:N]
-    for n1 in 1:length(x1), n2 in 1:length(x2)
-        bits1 = lin2bit(Val(D1), Val(R1), n1)
-        bits2 = lin2bit(Val(D2), Val(R2), n2)
-        bitsr = SVector{D,Bool}(bits2..., bits1...)
-        ind = bit2lin(Val(D), Val(R), bitsr)
-        push!(elts[ind], :(x1[$n1] * x2[$n2]))
+    elts = Any[nothing for n in 1:N]
+    for n in 1:N
+        bitsr = lin2bit(Val(D), Val(R), n)
+        bits1 = SVector{D1,Bool}(bitsr[1:D1])
+        bits2 = SVector{D2,Bool}(bitsr[(D1 + 1):end])
+        n1 = bit2lin(Val(D1), Val(R1), bits1)
+        n2 = bit2lin(Val(D2), Val(R2), bits2)
+        if n1 > 0 && n2 > 0
+            elts[n] = :(x1[$n1] * x2[$n2])
+        else
+            elts[n] = :(zero($U))
+        end
     end
-    function makesum(elt)
-        isempty(elt) && return :(zero($U))
-        return :(+($(elt...)))
-    end
+    @assert !any(==(nothing), elts)
     return quote
-        Form{$D,$R,$U}(SVector{$N,$U}($(makesum.(elts)...)))
+        Form{$D,$R,$U}(SVector{$N,$U}($(elts...)))
     end
 end
 tensorproduct(x::Form) = x
