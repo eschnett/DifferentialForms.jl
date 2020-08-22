@@ -19,7 +19,11 @@ export Form
     elts::SVector{binomial(Val(D), Val(R)),T}
 end
 
+# Constructor without explicit type
 Form{D,R}(elts::SVector{N,T}) where {D,R,N,T} = Form{D,R,T}(elts)
+
+# Constructor with added computed type (which must match)
+Form{D,R,T,X}(args...) where {D,R,T,X} = Form{D,R,T}(args...)::Form{D,R,T,X}
 
 Base.convert(::Type{T}, x::Form{D,0,T}) where {D,T} = x.elts[1]
 Base.convert(::Type{SVector}, x::Form{D,1,T}) where {D,T} = x.elts
@@ -60,6 +64,36 @@ Base.hash(x1::Form, h::UInt) = hash(hash(x1.elts, h), UInt(0xc060e76f))
 
 ################################################################################
 
+# Special constructors
+
+export fscalar
+"""
+    fscalar(Val(D), x)
+    fscalar(D, x)
+
+Create a `D`-dimensional scalar (a `0`-form)
+"""
+fscalar(::Val{D}, x) where {D} = Form{D,0}((x,))
+fscalar(D::Integer, x) = fscalar(Val(Int(D)), x)
+
+export fvector
+"""
+    fvector(x...)
+
+Create a `D`-dimensional vector (a `1`-form) from its `D` elements
+"""
+fvector(x...) = Form{length(x),1}(SVector(x))
+
+export fpseudoscalar
+"""
+    fpseudoscalar(Val(D), x)
+    fpseudoscalar(D, x)
+
+Create a `D`-dimensional pseudo-scalar (a `D`-form)
+"""
+fpseudoscalar(::Val{D}, x) where {D} = Form{D,D}((x,))
+fpseudoscalar(D::Integer, x) = fpseudoscalar(Val(Int(D)), x)
+
 # Constructors from collections
 
 const IteratorTypes{T,R} = Union{Base.Generator,Iterators.Flatten}
@@ -83,7 +117,7 @@ end
 
 @generated function Form{D,R,T}(fun::Function) where {D,R,T}
     N = binomial(D, R)
-    return quote
+    quote
         elts = SVector{$N,T}($([:(fun($(lin2lst(Val(D), Val(R), n)...)))
                                 for n in 1:N]...))
         return Form{D,R,T}(elts)
@@ -95,7 +129,7 @@ const ArrayTypes{T,N} = Union{Array{T,N},Adjoint{T,Array{T,N}},
                               Transpose{T,Array{T,N}}}
 @generated function Form{D,R,T}(arr::ArrayTypes) where {D,R,T}
     N = binomial(D, R)
-    return quote
+    quote
         @assert all(==(D), size(arr))
         elts = SVector{$N,T}($([:(arr[$(lin2lst(Val(D), Val(R), n)...)])
                                 for n in 1:N]...))
@@ -407,7 +441,7 @@ cycle_basis
         elts[ind] = :($op(x1[$n1]))
     end
     @assert !any(==(nothing), elts)
-    return quote
+    quote
         Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
     end
 end
@@ -434,7 +468,7 @@ reverse_basis
         elts[ind] = :($op(x1[$n1]))
     end
     @assert !any(==(nothing), elts)
-    return quote
+    quote
         Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
     end
 end
@@ -467,7 +501,7 @@ hodge
         elts[ind] = :($op(x1[$n1]))
     end
     @assert !any(==(nothing), elts)
-    return quote
+    quote
         Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
     end
 end
@@ -499,7 +533,7 @@ invhodge
         ind = bit2lin(Val(D), Val(R), bitsr)
         elts[ind] = :($op(x1[$n1]))
     end
-    return quote
+    quote
         Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
     end
 end
@@ -542,7 +576,7 @@ export wedge
         isempty(elt) && return :(zero($U))
         return :(+($(elt...)))
     end
-    return quote
+    quote
         Form{D,$R,$U}(SVector{$N,$U}($(makesum.(elts)...)))
     end
 end
@@ -622,7 +656,7 @@ tensorsum
         end
     end
     @assert !any(==(nothing), elts)
-    return quote
+    quote
         Form{$D,$R,$U}(SVector{$N,$U}($(elts...)))
     end
 end
@@ -662,7 +696,7 @@ tensorproduct
         end
     end
     @assert !any(==(nothing), elts)
-    return quote
+    quote
         Form{$D,$R,$U}(SVector{$N,$U}($(elts...)))
     end
 end

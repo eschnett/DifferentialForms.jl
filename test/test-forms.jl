@@ -8,7 +8,21 @@ using Test
     T = BigRat
 
     N = binomial(Val(D), Val(R))
-    Form{D,R,T}(SVector{N,T}(rand(T) for n in 1:N))
+    x = Form{D,R,T}(SVector{N,T}(rand(T) for n in 1:N))
+    X = typeof(x)
+    x′ = X(SVector{N,T}(rand(T) for n in 1:N))
+    if R == 0
+        x″ = fscalar(D, rand(T))
+        x″::X
+    end
+    if D > 0 && R == 1
+        x″ = fvector(rand(T, D)...)
+        x″::X
+    end
+    if R == D
+        x″ = fpseudoscalar(D, rand(T))
+        x″::X
+    end
 
     fun() = rand(T)
     fun(i) = rand(T)
@@ -16,7 +30,9 @@ using Test
     fun(i, j, k) = rand(T)
     fun(i, j, k, l) = rand(T)
     fun(i, j, k, l, m) = rand(T)
-    Form{D,R,T}(fun::Function)
+    y = Form{D,R,T}(fun::Function)
+    Y = typeof(y)
+    y′ = Y(fun::Function)
 
     arr = Array{T}(undef, ntuple(r -> D, R))
     for ind in
@@ -30,7 +46,9 @@ using Test
             arr[lst...] = rand(T)
         end
     end
-    Form{D,R,T}(arr)
+    z = Form{D,R,T}(arr)
+    Z = typeof(z)
+    z′ = Z(arr)
 end
 
 @testset "Vector space operations on forms D=$D R=$R" for D in 0:Dmax, R in 0:D
