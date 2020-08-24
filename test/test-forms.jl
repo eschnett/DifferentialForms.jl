@@ -49,6 +49,25 @@ using Test
     z = Form{D,R,T}(arr)
     Z = typeof(z)
     z′ = Z(arr)
+
+    subarr = R == 0 ? (@view arr[]) :
+             R == 1 ? (@view arr[:]) :
+             R == 2 ? (@view arr[:, :]) :
+             R == 3 ? (@view arr[:, :, :]) :
+             R == 4 ? (@view arr[:, :, :, :]) :
+             R == 5 ? (@view arr[:, :, :, :, :]) : nothing
+    subarr::SubArray
+    @assert ndims(arr) == R
+    @assert ndims(subarr) == R
+    @assert all(size(arr, r) == D for r in 1:R)
+    @assert all(size(subarr, r) == D for r in 1:R)
+    @assert all(==(D), size(arr))
+    @assert all(==(D), size(subarr))
+    w = Form{D,R,T}(subarr)
+    @test w == z
+    W = typeof(w)
+    w′ = W(subarr)
+    @test w′ == z′
 end
 
 @testset "Vector space operations on forms D=$D R=$R" for D in 0:Dmax, R in 0:D

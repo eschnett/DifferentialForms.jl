@@ -108,7 +108,7 @@ function Form{D,R,T}(tup::Tuple) where {D,R,T}
     return Form{D,R,T}(SVector{N,T}(tup))
 end
 function Form{D,R}(tup::Tuple{}) where {D,R}
-    return @error "Cannot create Form from emtpy tuple"
+    return @error "Cannot create Form from emtpy tuple without specifying type"
 end
 function Form{D,R}(tup::Tuple) where {D,R}
     N = binomial(Val(D), Val(R))
@@ -126,8 +126,10 @@ end
 
 # We cannot use `AbstractArray` here because we need to exclude `SVector`
 const ArrayTypes{T,N} = Union{Array{T,N},Adjoint{T,Array{T,N}},
-                              Transpose{T,Array{T,N}}}
-@generated function Form{D,R,T}(arr::ArrayTypes) where {D,R,T}
+                              Transpose{T,Array{T,N}},SubArray{T,N},
+                              Adjoint{T,<:SubArray{T,N}},
+                              Transpose{T,<:SubArray{T,N}}}
+@generated function Form{D,R,T}(arr::ArrayTypes{T,R}) where {D,R,T}
     N = binomial(D, R)
     quote
         @assert all(==(D), size(arr))
