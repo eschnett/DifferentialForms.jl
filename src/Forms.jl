@@ -614,8 +614,6 @@ export dot, ⋅
 
 Base.abs2(x::Form) = (x ⋅ x)[]
 Base.abs(x::Form) = sqrt(abs2(x))
-Base.abs(x::Form{D,0}) where {D} = abs(x[1])
-Base.abs(x::Form{D,D}) where {D} = abs(x[1])
 
 """
     cross(x, y)
