@@ -612,8 +612,14 @@ Dot product: `x ⋅ y = x ∧ ⋆y`
 LinearAlgebra.dot(x1::Form, x2::Form) = x1 ∨ ⋆x2
 export dot, ⋅
 
-Base.abs2(x::Form) = (x ⋅ x)[]
-Base.abs(x::Form) = sqrt(abs2(x))
+# Base.abs2(x::Form) = (x ⋅ x)[]
+# Base.abs(x::Form) = sqrt(abs2(x))
+norm2(x::Missing) = missing
+norm2(x::Number) = abs2(x)
+norm2(x::Form) = (x ⋅ x)[]
+export norm2
+LinearAlgebra.norm(x::Form) = sqrt(norm2(x))
+export norm
 
 """
     cross(x, y)

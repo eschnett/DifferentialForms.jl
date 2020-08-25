@@ -240,14 +240,15 @@ end
         @test x ⋅ y === x ∨ ⋆y
     end
 
-    abs2(x)::T
-    @test abs2(x) >= 0
-    @test abs2(a * x) == abs2(a) * abs2(x)
-    # @test abs2(y + y2) <= abs2(y) + abs2(y2)
-    abs(x)::float(T)
-    @test abs(x) ≈ sqrt(abs2(x))
-    @test abs(a * x) ≈ abs(a) * abs(x)
-    @test abs(y + y2) <= abs(y) + abs(y2) || abs(y + y2) ≈ abs(y) + abs(y2)
+    norm2(x)::T
+    @test norm2(x) >= 0
+    @test norm2(a * x) == norm2(a) * norm2(x)
+    # @test norm2(y + y2) <= norm2(y) + norm2(y2)
+    norm(x)::float(T)
+    @test norm(x) ≈ sqrt(norm2(x))
+    @test norm(a * x) ≈ norm(a) * norm(x)
+    @test norm(y + y2) <= norm(y) + norm(y2) ||
+          norm(y + y2) ≈ norm(y) + norm(y2)
 
     # cross product: x × y = ⋆(x ∧ y)
     Rcross = D - (R1 + R2)
