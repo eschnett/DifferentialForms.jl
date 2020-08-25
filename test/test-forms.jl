@@ -244,7 +244,11 @@ end
     @test abs2(x) >= 0
     @test abs2(a * x) == abs2(a) * abs2(x)
     # @test abs2(y + y2) <= abs2(y) + abs2(y2)
-    abs(x)::typeof(sqrt(one(T)))
+    if length(x) == 1
+        abs(x)::T
+    else
+        abs(x)::typeof(sqrt(one(T)))
+    end
     @test abs(x) ≈ sqrt(abs2(x))
     @test abs(a * x) ≈ abs(a) * abs(x)
     @test abs(y + y2) <= abs(y) + abs(y2) || abs(y + y2) ≈ abs(y) + abs(y2)
