@@ -5,15 +5,6 @@ using StaticArrays
 export unit
 function unit end
 
-export hodge
-function hodge end
-export ⋆
-const ⋆ = hodge
-
-export invhodge
-function invhodge end
-Base.inv(::typeof(hodge)) = invhodge
-
 export bitsign
 bitsign(b::Bool) = b ? -1 : 1
 bitsign(i::Integer) = bitsign(isodd(i))

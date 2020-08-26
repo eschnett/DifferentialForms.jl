@@ -483,7 +483,7 @@ export reverse_basis
 Hodge dual
 """
 hodge
-@generated function Defs.hodge(x1::Form{D,R1}) where {D,R1}
+@generated function hodge(x1::Form{D,R1}) where {D,R1}
     @assert 0 <= R1 <= D
     R = D - R1
     @assert 0 <= R <= D
@@ -507,6 +507,8 @@ hodge
         Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
     end
 end
+export hodge, ⋆
+const ⋆ = hodge
 
 """
     invhodge(x)
@@ -515,7 +517,7 @@ end
 Inverse of Hodge dual: `inv(⋆)⋆x = x`
 """
 invhodge
-@generated function Defs.invhodge(x1::Form{D,R1}) where {D,R1}
+@generated function invhodge(x1::Form{D,R1}) where {D,R1}
     @assert 0 <= R1 <= D
     R = D - R1
     @assert 0 <= R <= D
@@ -539,6 +541,8 @@ invhodge
         Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
     end
 end
+export invhodge
+Base.inv(::typeof(hodge)) = invhodge
 
 Base.conj(x::Form{D,R}) where {D,R} = Form{D,R}(conj.(x.elts))
 
@@ -549,8 +553,6 @@ Base.conj(x::Form{D,R}) where {D,R} = Form{D,R}(conj.(x.elts))
 Outer producxt
 """
 wedge
-
-export wedge
 @generated function wedge(x1::Form{D,R1}, x2::Form{D,R2}) where {D,R1,R2}
     @assert 0 <= R1 <= D
     @assert 0 <= R2 <= D
@@ -584,7 +586,7 @@ export wedge
 end
 wedge(x::Form) = x
 wedge(x1::Form, x2::Form, x3s::Form...) = wedge(wedge(x1, x2), x3s...)
-export ∧
+export wedge, ∧
 const ∧ = wedge
 
 """
@@ -595,11 +597,10 @@ Regressive product: `⋆(x ∨ y) = ⋆x ∧ ⋆y`
 (Inspired by Grassmann.jl)
 """
 vee
-export vee
 vee(x1::Form, x2::Form) = inv(⋆)(⋆x1 ∧ ⋆x2)
 vee(x::Form) = x
 vee(x1::Form, x2::Form, x3s::Form...) = vee(vee(x1, x2), x3s...)
-export ∨
+export vee, ∨
 const ∨ = vee
 
 """
