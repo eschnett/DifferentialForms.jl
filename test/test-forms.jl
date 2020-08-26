@@ -149,10 +149,12 @@ end
         @test ~e1 === e1
         @test ~e2 === e2
         @test ~e12 === -e12
+
         @test ⋆e === e12
         @test ⋆e1 === e2
         @test ⋆e2 === -e1
         @test ⋆e12 === e
+
         @test e ∧ e === e
         @test e ∧ e1 === e1
         @test e ∧ e2 === e2
@@ -160,6 +162,28 @@ end
         @test e1 ∧ e1 === 0 * e12
         @test e2 ∧ e2 === 0 * e12
         @test e1 ∧ e2 === e12
+
+        @test e ∨ e12 === e
+        @test e1 ∨ e1 === 0 * e
+        @test e2 ∨ e2 === 0 * e
+        @test e1 ∨ e2 === e
+        @test e1 ∨ e12 === e1
+        @test e2 ∨ e12 === e2
+        @test e12 ∨ e12 === e12
+
+        @test e ⋅ e === e
+        @test e1 ⋅ e1 === e
+        @test e2 ⋅ e2 === e
+        @test e1 ⋅ e2 === 0 * e
+        @test e12 ⋅ e12 === e
+
+        @test e × e === e12
+        @test e × e1 === e2
+        @test e × e2 === -e1
+        @test e × e12 === e
+        @test e1 × e1 === 0 * e
+        @test e2 × e2 === 0 * e
+        @test e1 × e2 === e
     end
 
     # various duals
