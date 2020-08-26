@@ -556,7 +556,7 @@ export wedge
     @assert 0 <= R2 <= D
     R = R1 + R2
     @assert 0 <= R <= D
-    U = typeof(one(eltype(x1)) * one(eltype(x2)) / 1)
+    U = typeof(one(eltype(x1)) * one(eltype(x2)))
     N = binomial(D, R)
     elts = [Any[] for n in 1:N]
     for n1 in 1:length(x1), n2 in 1:length(x2)
@@ -606,7 +606,7 @@ const ∨ = vee
     dot(x, y)
     x ⋅ y   (typed: \\cdot<tab>)
 
-Dot product: `x ⋅ y = x ∧ ⋆y`
+Dot product: `x ⋅ y = x ∨ ⋆y`
 (Inspired by Grassmann.jl)
 """
 LinearAlgebra.dot(x1::Form, x2::Form) = x1 ∨ ⋆x2
