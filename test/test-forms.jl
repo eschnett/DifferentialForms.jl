@@ -68,6 +68,8 @@ using Test
     W = typeof(w)
     w′ = W(subarr)
     @test w′ == z′
+
+    @test w′ ≈ z′
 end
 
 @testset "Vector space operations on forms D=$D R=$R" for D in 0:Dmax, R in 0:D

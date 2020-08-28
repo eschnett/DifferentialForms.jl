@@ -61,6 +61,10 @@ function Base.isequal(x1::Form{D,R}, x2::Form{D,R}) where {D,R}
     return isequal(x1.elts, x2.elts)
 end
 Base.hash(x1::Form, h::UInt) = hash(hash(x1.elts, h), UInt(0xc060e76f))
+function Base.isapprox(x1::Form{D,R}, x2::Form{D,R}; kw...) where {D,R}
+    scale = max(norm(x1), norm(2))
+    isapprox(scale + norm(x1 - x2), scale; kw...)
+end
 
 ################################################################################
 
