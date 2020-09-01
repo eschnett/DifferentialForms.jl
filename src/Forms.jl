@@ -25,6 +25,11 @@ Form{D,R}(elts::SVector{N,T}) where {D,R,N,T} = Form{D,R,T}(elts)
 # Constructor with added computed type (which must match)
 Form{D,R,T,X}(args...) where {D,R,T,X} = Form{D,R,T}(args...)::Form{D,R,T,X}
 
+# Conversions
+function Form{D,R,T}(f::Form{D,R}) where {D,R,T}
+    Form{D,R,T}(SVector{length(Form{D,R}),T}(f.elts))
+end
+
 Base.convert(::Type{T}, x::Form{D,0,T}) where {D,T} = x.elts[1]
 Base.convert(::Type{SVector}, x::Form{D,1,T}) where {D,T} = x.elts
 Base.convert(::Type{SVector{D}}, x::Form{D,1,T}) where {D,T} = x.elts

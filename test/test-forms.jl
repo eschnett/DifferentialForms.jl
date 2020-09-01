@@ -24,6 +24,8 @@ using Test
         x″::X
     end
 
+    @test Form{D,R,Float64}(x) == Form{D,R,Float64}(x.elts)
+
     fun() = rand(T)
     fun(i) = rand(T)
     fun(i, j) = rand(T)
