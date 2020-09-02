@@ -25,6 +25,30 @@ Form{D,R}(elts::SVector{N,T}) where {D,R,N,T} = Form{D,R,T}(elts)
 # Constructor with added computed type (which must match)
 Form{D,R,T,X}(args...) where {D,R,T,X} = Form{D,R,T}(args...)::Form{D,R,T,X}
 
+const IteratorTypes{T,R} = Union{Base.Generator,Iterators.Flatten}
+function Form{D,R,T}(gen::IteratorTypes) where {D,R,T}
+    N = length(Form{D,R})
+    Form{D,R,T}(SVector{N,T}(elts))
+end
+function Form{D,R}(gen::IteratorTypes) where {D,R}
+    @assert IteratorEltype(typeof(gen)) == HasEltype()
+    N = length(Form{D,R})
+    T = eltype(gen)
+    Form{D,R,T}(SVector{N,T}(elts))
+end
+
+function Form{D,R,T}(tup::Tuple) where {D,R,T}
+    N = length(Form{D,R})
+    Form{D,R,T}(SVector{N,T}(tup))
+end
+function Form{D,R}(tup::Tuple) where {D,R}
+    N = length(Form{D,R})
+    Form{D,R}(SVector{N}(tup))
+end
+function Form{D,R}(tup::Tuple{}) where {D,R}
+    @error "Cannot create Form from emtpy tuple without specifying type"
+end
+
 # Conversions
 function Form{D,R,T}(f::Form{D,R}) where {D,R,T}
     Form{D,R,T}(SVector{length(Form{D,R}),T}(f.elts))
@@ -105,40 +129,10 @@ fpseudoscalar(D::Integer, x) = fpseudoscalar(Val(Int(D)), x)
 
 # Constructors from collections
 
-const IteratorTypes{T,R} = Union{Base.Generator,Iterators.Flatten}
-function Form{D,R,T}(gen::IteratorTypes) where {D,R,T}
-    N = binomial(Val(D), Val(R))
-    elts = SVector{N,T}(gen)
-    return Form{D,R,T}(elts)
-end
+export form
 
-function Form{D,R,T}(tup::Tuple) where {D,R,T}
-    N = binomial(Val(D), Val(R))
-    return Form{D,R,T}(SVector{N,T}(tup))
-end
-function Form{D,R}(tup::Tuple{}) where {D,R}
-    return @error "Cannot create Form from emtpy tuple without specifying type"
-end
-function Form{D,R}(tup::Tuple) where {D,R}
-    N = binomial(Val(D), Val(R))
-    return Form{D,R}(SVector{N}(tup))
-end
-
-@generated function Form{D,R,T}(fun::Function) where {D,R,T}
-    N = binomial(D, R)
-    quote
-        elts = SVector{$N,T}($([:(fun($(lin2lst(Val(D), Val(R), n)...)))
-                                for n in 1:N]...))
-        return Form{D,R,T}(elts)
-    end
-end
-
-# We cannot use `AbstractArray` here because we need to exclude `SVector`
-const ArrayTypes{T,N} = Union{Array{T,N},Adjoint{T,Array{T,N}},
-                              Transpose{T,Array{T,N}},SubArray{T,N},
-                              Adjoint{T,<:SubArray{T,N}},
-                              Transpose{T,<:SubArray{T,N}}}
-@generated function Form{D,R,T}(arr::ArrayTypes{T,R}) where {D,R,T}
+@generated function form(::Val{D}, ::Val{R}, ::Type{T},
+                         arr::AbstractArray{U,R}) where {D,R,T,U}
     N = binomial(D, R)
     quote
         @assert all(==(D), size(arr))
@@ -147,10 +141,43 @@ const ArrayTypes{T,N} = Union{Array{T,N},Adjoint{T,Array{T,N}},
         return Form{D,R,T}(elts)
     end
 end
-function Form{D,R}(arr::ArrayTypes) where {D,R}
+function form(::Val{D}, ::Val{R}, arr::AbstractArray) where {D,R}
     T = eltype(arr)
     return Form{D,R,T}(arr)
 end
+
+function form(::Val{D}, ::Val{R}, ::Type{T}, tup::Tuple) where {D,R,T}
+    N = binomial(Val(D), Val(R))
+    return Form{D,R,T}(SVector{N,T}(tup))
+end
+function form(::Val{D}, ::Val{R}, tup::Tuple{}) where {D,R}
+    @error "Cannot create Form from emtpy tuple without specifying type"
+end
+function form(::Val{D}, ::Val{R}, tup::Tuple) where {D,R}
+    N = binomial(Val(D), Val(R))
+    return Form{D,R}(SVector{N}(tup))
+end
+
+function form(::Val{D}, ::Val{R}, ::Type{T}, gen::IteratorTypes) where {D,R,T}
+    N = binomial(Val(D), Val(R))
+    elts = SVector{N,T}(gen)
+    return Form{D,R,T}(elts)
+end
+
+@generated function form(::Val{D}, ::Val{R}, ::Type{T},
+                         fun::Function) where {D,R,T}
+    N = binomial(D, R)
+    quote
+        elts = SVector{$N,T}($([:(fun($(lin2lst(Val(D), Val(R), n)...)))
+                                for n in 1:N]...))
+        return Form{D,R,T}(elts)
+    end
+end
+
+export MakeForm
+struct MakeForm{D,R,T} end
+MakeForm{D,R,T}(elts) where {D,R,T} = form(Val(D), Val(R), T, elts)
+MakeForm{D,R}(elts) where {D,R} = form(Val(D), Val(R), elts)
 
 ################################################################################
 

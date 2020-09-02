@@ -26,15 +26,19 @@ using Test
 
     @test Form{D,R,Float64}(x) == Form{D,R,Float64}(x.elts)
 
+    @test Form{D,R,Float64}(collect(x)) == Form{D,R,Float64}(x)
+end
+
+@testset "Create forms from arrays D=$D R=$R" for D in 0:Dmax, R in 0:D
+    T = BigRat
+
     fun() = rand(T)
     fun(i) = rand(T)
     fun(i, j) = rand(T)
     fun(i, j, k) = rand(T)
     fun(i, j, k, l) = rand(T)
     fun(i, j, k, l, m) = rand(T)
-    y = Form{D,R,T}(fun::Function)
-    Y = typeof(y)
-    y′ = Y(fun::Function)
+    y = MakeForm{D,R,T}(fun::Function)
 
     arr = Array{T}(undef, ntuple(r -> D, R))
     for ind in
@@ -48,9 +52,7 @@ using Test
             arr[lst...] = rand(T)
         end
     end
-    z = Form{D,R,T}(arr)
-    Z = typeof(z)
-    z′ = Z(arr)
+    z = MakeForm{D,R,T}(arr)
 
     subarr = R == 0 ? (@view arr[]) :
              R == 1 ? (@view arr[:]) :
@@ -65,13 +67,8 @@ using Test
     @assert all(size(subarr, r) == D for r in 1:R)
     @assert all(==(D), size(arr))
     @assert all(==(D), size(subarr))
-    w = Form{D,R,T}(subarr)
+    w = MakeForm{D,R,T}(subarr)
     @test w == z
-    W = typeof(w)
-    w′ = W(subarr)
-    @test w′ == z′
-
-    @test w′ ≈ z′
 end
 
 @testset "Vector space operations on forms D=$D R=$R" for D in 0:Dmax, R in 0:D
