@@ -612,12 +612,9 @@ wedge
             push!(elts[ind], :($op(x1[$n1] * x2[$n2])))
         end
     end
-    function makesum(elt)
-        isempty(elt) && return :(zero($U))
-        return :(+($(elt...)))
-    end
+    elts = [isempty(elt) ? :(zero($U)) : :(+($(elt...))) for elt in elts]
     quote
-        Form{D,$R,$U}(SVector{$N,$U}($(makesum.(elts)...)))
+        Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
     end
 end
 wedge(x::Form) = x
