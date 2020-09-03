@@ -589,12 +589,13 @@ Base.conj(x::Form{D,R}) where {D,R} = Form{D,R}(conj.(x.elts))
 Outer producxt
 """
 wedge
-@generated function wedge(x1::Form{D,R1}, x2::Form{D,R2}) where {D,R1,R2}
+@generated function wedge(x1::Form{D,R1,T1},
+                          x2::Form{D,R2,T2}) where {D,R1,R2,T1,T2}
     @assert 0 <= R1 <= D
     @assert 0 <= R2 <= D
     R = R1 + R2
     @assert 0 <= R <= D
-    U = typeof(one(eltype(x1)) * one(eltype(x2)))
+    U = typeof(one(T1) * one(T2))
     N = binomial(D, R)
     elts = [Any[] for n in 1:N]
     for n1 in 1:length(x1), n2 in 1:length(x2)
