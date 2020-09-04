@@ -131,8 +131,10 @@ fpseudoscalar(D::Integer, x) = fpseudoscalar(Val(Int(D)), x)
 
 export form
 
+# TODO: Use `@generated` only to generate the index lists; access the
+# array in a regular funcion
 @generated function form(::Val{D}, ::Val{R}, ::Type{T},
-                         arr::AbstractArray{U,R}) where {D,R,T,U}
+                         arr::AbstractArray{T,R}) where {D,R,T}
     N = binomial(D, R)
     quote
         @assert all(==(D), size(arr))
@@ -140,6 +142,10 @@ export form
                                 for n in 1:N]...))
         return Form{D,R,T}(elts)
     end
+end
+function form(::Val{D}, ::Val{R}, ::Type{T},
+              arr::AbstractArray{U,R}) where {D,R,T,U}
+    return Form{D,R,T}(Form{D,R,U}(arr))
 end
 function form(::Val{D}, ::Val{R}, arr::AbstractArray) where {D,R}
     T = eltype(arr)
@@ -164,11 +170,13 @@ function form(::Val{D}, ::Val{R}, ::Type{T}, gen::IteratorTypes) where {D,R,T}
     return Form{D,R,T}(elts)
 end
 
+# TODO: Use `@generated` only to generate the index lists; call the
+# function in a regular funcion
 @generated function form(::Val{D}, ::Val{R}, ::Type{T},
                          fun::Function) where {D,R,T}
     N = binomial(D, R)
     quote
-        elts = SVector{$N,T}($([:(fun($(lin2lst(Val(D), Val(R), n)...)))
+        elts = SVector{$N,T}($([:(fun($(lin2lst(Val(D), Val(R), n)...))::T)
                                 for n in 1:N]...))
         return Form{D,R,T}(elts)
     end
@@ -519,29 +527,37 @@ export reverse_basis
 Hodge dual
 """
 hodge
-@generated function hodge(x1::Form{D,R1}) where {D,R1}
+@generated function hodge_algorithm(::Val{D}, ::Val{R1}) where {D,R1}
     @assert 0 <= R1 <= D
     R = D - R1
     @assert 0 <= R <= D
-    U = typeof(one(eltype(x1)))
+    N1 = binomial(D, R1)
     N = binomial(D, R)
     elts = Any[nothing for n in 1:N]
-    for n1 in 1:length(x1)
+    for n1 in 1:N1
         bits1 = lin2bit(Val(D), Val(R1), n1)
         bitsr = .~bits1
         _, parity = sort_perm(SVector{R1 + R,Int}(bit2lst(Val(D), Val(R1),
                                                           bits1)...,
                                                   bit2lst(Val(D), Val(R),
                                                           bitsr)...))
-        s = bitsign(parity)
-        op = s > 0 ? :+ : :-
+        s = isodd(parity)
         ind = bit2lin(Val(D), Val(R), bitsr)
-        elts[ind] = :($op(x1[$n1]))
+        elts[ind] = (s, n1)
     end
     @assert !any(==(nothing), elts)
-    quote
-        Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
-    end
+    SVector{N,Tuple{Bool,Int}}(elts)
+end
+@inline function eval_hodge_term(term::Tuple{Bool,Int}, x1)
+    s, i = term
+    @inbounds bitsign(s) * x1[i]
+end
+function hodge(x1::Form{D,R1}) where {D,R1}
+    @assert 0 <= R1 <= D
+    R = D - R1
+    @assert 0 <= R <= D
+    algorithm = hodge_algorithm(Val(D), Val(R1))::SVector
+    Form{D,R}(map(term -> eval_hodge_term(term, x1), algorithm))
 end
 export hodge, ⋆
 const ⋆ = hodge
@@ -553,14 +569,14 @@ const ⋆ = hodge
 Inverse of Hodge dual: `inv(⋆)⋆x = x`
 """
 invhodge
-@generated function invhodge(x1::Form{D,R1}) where {D,R1}
+@generated function invhodge_algorithm(::Val{D}, ::Val{R1}) where {D,R1}
     @assert 0 <= R1 <= D
     R = D - R1
     @assert 0 <= R <= D
-    U = typeof(one(eltype(x1)))
+    N1 = binomial(D, R1)
     N = binomial(D, R)
-    elts = Any[:(zero($U)) for n in 1:N]
-    for n1 in 1:length(x1)
+    elts = Any[nothing for n in 1:N]
+    for n1 in 1:N1
         bits1 = lin2bit(Val(D), Val(R1), n1)
         bitsr = .~bits1
         # The "opposite" parity as `hodge`
@@ -568,14 +584,23 @@ invhodge
                                                           bitsr)...,
                                                   bit2lst(Val(D), Val(R1),
                                                           bits1)...))
-        s = bitsign(parity)
-        op = s > 0 ? :+ : :-
+        s = isodd(parity)
         ind = bit2lin(Val(D), Val(R), bitsr)
-        elts[ind] = :($op(x1[$n1]))
+        elts[ind] = (s, n1)
     end
-    quote
-        Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
-    end
+    @assert !any(==(nothing), elts)
+    SVector{N,Tuple{Bool,Int}}(elts)
+end
+@inline function eval_invhodge_term(term::Tuple{Bool,Int}, x1)
+    s, i = term
+    @inbounds bitsign(s) * x1[i]
+end
+function invhodge(x1::Form{D,R1}) where {D,R1}
+    @assert 0 <= R1 <= D
+    R = D - R1
+    @assert 0 <= R <= D
+    algorithm = invhodge_algorithm(Val(D), Val(R1))::SVector
+    Form{D,R}(map(term -> eval_invhodge_term(term, x1), algorithm))
 end
 export invhodge
 Base.inv(::typeof(hodge)) = invhodge
@@ -589,16 +614,17 @@ Base.conj(x::Form{D,R}) where {D,R} = Form{D,R}(conj.(x.elts))
 Outer producxt
 """
 wedge
-@generated function wedge(x1::Form{D,R1,T1},
-                          x2::Form{D,R2,T2}) where {D,R1,R2,T1,T2}
+@generated function wedge_algorithm(::Val{D}, ::Val{R1},
+                                    ::Val{R2}) where {D,R1,R2}
     @assert 0 <= R1 <= D
     @assert 0 <= R2 <= D
     R = R1 + R2
     @assert 0 <= R <= D
-    U = typeof(one(T1) * one(T2))
+    N1 = binomial(D, R1)
+    N2 = binomial(D, R2)
     N = binomial(D, R)
     elts = [Any[] for n in 1:N]
-    for n1 in 1:length(x1), n2 in 1:length(x2)
+    for n1 in 1:N1, n2 in 1:N2
         bits1 = lin2bit(Val(D), Val(R1), n1)
         bits2 = lin2bit(Val(D), Val(R2), n2)
         if !any(bits1 .& bits2)
@@ -607,16 +633,37 @@ wedge
                                                                bits1)...,
                                                        bit2lst(Val(D), Val(R2),
                                                                bits2)...))
-            s = bitsign(parity)
-            op = s > 0 ? :+ : :-
+            s = isodd(parity)
             ind = bit2lin(Val(D), Val(R), bitsr)
-            push!(elts[ind], :($op(x1[$n1] * x2[$n2])))
+            push!(elts[ind], (s, n1, n2))
         end
     end
-    elts = [isempty(elt) ? :(zero($U)) : :(+($(elt...))) for elt in elts]
-    quote
-        Form{D,$R,$U}(SVector{$N,$U}($(elts...)))
+    M = length(elts[1])
+    @assert all(elt -> length(elt) == M, elts)
+    elts = Tuple.(elts)::Vector{NTuple{M,Tuple{Bool,Int,Int}}}
+    SVector{N,NTuple{M,Tuple{Bool,Int,Int}}}(elts)
+end
+@inline function eval_wedge_term(term::NTuple{M,Tuple{Bool,Int,Int}}, x1,
+                                 x2) where {M}
+    U = typeof(one(eltype(x1)) * one(eltype(x2)))
+    M == 0 && return zero(U)
+    @inbounds begin
+        s, i, j = term[1]
+        r = bitsign(s) * x1[i] * x2[j]
+        for m in 2:M
+            s, i, j = term[m]
+            r += bitsign(s) * x1[i] * x2[j]
+        end
     end
+    r
+end
+function wedge(x1::Form{D,R1,T1}, x2::Form{D,R2,T2}) where {D,R1,R2,T1,T2}
+    @assert 0 <= R1 <= D
+    @assert 0 <= R2 <= D
+    R = R1 + R2
+    @assert 0 <= R <= D
+    algorithm = wedge_algorithm(Val(D), Val(R1), Val(R2))::SVector
+    Form{D,R}(map(term -> eval_wedge_term(term, x1, x2), algorithm))
 end
 wedge(x::Form) = x
 wedge(x1::Form, x2::Form, x3s::Form...) = wedge(wedge(x1, x2), x3s...)
@@ -675,11 +722,11 @@ export cross, ×
 Tensor sum
 """
 tensorsum
-@generated function tensorsum(x1::Form{D1,R}, x2::Form{D2,R}) where {D1,D2,R}
+@generated function tensorsum_algorithm(::Val{D1}, ::Val{D2},
+                                        ::Val{R}) where {D1,D2,R}
     @assert 0 < R <= D1
     @assert 0 < R <= D2
     D = D1 + D2
-    U = typeof(zero(eltype(x1)) + zero(eltype(x2)))
     N = binomial(D, R)
     elts = Any[nothing for n in 1:N]
     for n in 1:N
@@ -690,18 +737,31 @@ tensorsum
         n2 = bit2lin(Val(D2), Val(R), bits2)
         if n1 > 0
             @assert n2 == 0
-            elts[n] = :(x1[$n1])
+            elts[n] = (Val(1), n1)
         elseif n2 > 0
             @assert n1 == 0
-            elts[n] = :(x2[$n2])
+            elts[n] = (Val(2), n2)
         else
-            elts[n] = :(zero($U))
+            elts[n] = nothing
         end
     end
-    @assert !any(==(nothing), elts)
-    quote
-        Form{$D,$R,$U}(SVector{$N,$U}($(elts...)))
-    end
+    Tuple(elts)
+end
+@inline function eval_tensorsum_term(term::Nothing, x1, x2)
+    U = typeof(one(eltype(x1)) * one(eltype(x2)))
+    return zero(U)
+end
+@inline function eval_tensorsum_term(term::Tuple{Val{I},Int}, x1, x2) where {I}
+    _, i = term
+    I == 1 && return (@inbounds x1[i])
+    I == 2 && return (@inbounds x2[i])
+end
+function tensorsum(x1::Form{D1,R}, x2::Form{D2,R}) where {D1,D2,R}
+    @assert 0 < R <= D1
+    @assert 0 < R <= D2
+    D = D1 + D2
+    algorithm = tensorsum_algorithm(Val(D1), Val(D2), Val(R))
+    Form{D,R}(map(term -> eval_tensorsum_term(term, x1, x2), algorithm))
 end
 tensorsum(x::Form) = x
 function tensorsum(x1::Form, x2::Form, x3s::Form...)
@@ -717,13 +777,12 @@ export tensorsum, ⊕
 Tensor product
 """
 tensorproduct
-@generated function tensorproduct(x1::Form{D1,R1},
-                                  x2::Form{D2,R2}) where {D1,R1,D2,R2}
+@generated function tensorproduct_algorithm(::Val{D1}, ::Val{R1}, ::Val{D2},
+                                            ::Val{R2}) where {D1,R1,D2,R2}
     @assert 0 <= R1 <= D1
     @assert 0 <= R2 <= D2
     D = D1 + D2
     R = R1 + R2
-    U = typeof(zero(eltype(x1)) + zero(eltype(x2)))
     N = binomial(D, R)
     elts = Any[nothing for n in 1:N]
     for n in 1:N
@@ -733,15 +792,28 @@ tensorproduct
         n1 = bit2lin(Val(D1), Val(R1), bits1)
         n2 = bit2lin(Val(D2), Val(R2), bits2)
         if n1 > 0 && n2 > 0
-            elts[n] = :(x1[$n1] * x2[$n2])
+            elts[n] = (n1, n2)
         else
-            elts[n] = :(zero($U))
+            elts[n] = nothing
         end
     end
-    @assert !any(==(nothing), elts)
-    quote
-        Form{$D,$R,$U}(SVector{$N,$U}($(elts...)))
-    end
+    Tuple(elts)
+end
+@inline function eval_tensorproduct_term(term::Nothing, x1, x2)
+    U = typeof(one(eltype(x1)) * one(eltype(x2)))
+    return zero(U)
+end
+@inline function eval_tensorproduct_term(term::Tuple{Int,Int}, x1, x2) where {I}
+    i, j = term
+    return (@inbounds x1[i] * x2[j])
+end
+function tensorproduct(x1::Form{D1,R1}, x2::Form{D2,R2}) where {D1,R1,D2,R2}
+    @assert 0 <= R1 <= D1
+    @assert 0 <= R2 <= D2
+    D = D1 + D2
+    R = R1 + R2
+    algorithm = tensorproduct_algorithm(Val(D1), Val(R1), Val(D2), Val(R2))
+    Form{D,R}(map(term -> eval_tensorproduct_term(term, x1, x2), algorithm))
 end
 tensorproduct(x::Form) = x
 function tensorproduct(x1::Form, x2::Form, x3s::Form...)
