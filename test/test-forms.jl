@@ -246,6 +246,7 @@ end
     # regressive product: ⋆(x ∨ y) = ⋆x ∧ ⋆y
     @test ∨(x) === x
     Rvee = D - ((D - R1) + (D - R2))
+    @test Rvee == R1 + R2 - D
     if 0 <= Rvee <= D
         (x ∨ y)::Form{D,Rvee}
         @test ⋆(x ∨ y) === ⋆x ∧ ⋆y
@@ -264,6 +265,7 @@ end
 
     # dot product: x ⋅ y = x ∨ ⋆y   (right contraction)
     Rdot = D - ((D - R1) + R2)
+    @test Rdot == R1 - R2
     if 0 <= Rdot <= D
         (x ⋅ y)::Form{D,Rdot}
         @test x ⋅ y === x ∨ ⋆y

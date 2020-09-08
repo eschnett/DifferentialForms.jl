@@ -447,13 +447,13 @@ Base.:\(a, x::Form{D,R}) where {D,R} = Form{D,R}(a \ x.elts)
 
 # Forms form an algebra
 
-Base.zero(::Type{<:Form{D,R,T}}) where {D,R,T} = zeros(Form{D,R,T})
-Base.zero(::Type{<:Form{D,R}}) where {D,R} = zero(Form{D,R,Float64})
-Base.zero(x::Form) = zero(typeof(x))
-Base.one(::Type{<:Form{D,0,T}}) where {D,T} = Form{D,0,T}((one(T),))
-Base.one(::Type{<:Form{D,0}}) where {D} = one(Form{D,0,Float64})
-Base.one(::Type{<:Form{D}}) where {D} = one(Form{D,0})
-Base.one(x::Form) = one(typeof(x))
+@inline Base.zero(::Type{<:Form{D,R,T}}) where {D,R,T} = zeros(Form{D,R,T})
+@inline Base.zero(::Type{<:Form{D,R}}) where {D,R} = zero(Form{D,R,Float64})
+@inline Base.zero(x::Form) = zero(typeof(x))
+@inline Base.one(::Type{<:Form{D,0,T}}) where {D,T} = Form{D,0,T}((one(T),))
+@inline Base.one(::Type{<:Form{D,0}}) where {D} = one(Form{D,0,Float64})
+@inline Base.one(::Type{<:Form{D}}) where {D} = one(Form{D,0})
+@inline Base.one(x::Form) = one(typeof(x))
 
 """
     reverse(x)
@@ -462,9 +462,9 @@ Base.one(x::Form) = one(typeof(x))
 Reverse
 """
 reverse
-Base.reverse(x::Form{D,R}) where {D,R} = bitsign((R - 1) * R ÷ 2) * x
-Base.:~(x::Form) = reverse(x)
-Base.inv(::typeof(~)) = ~
+@inline Base.reverse(x::Form{D,R}) where {D,R} = bitsign((R - 1) * R ÷ 2) * x
+@inline Base.:~(x::Form) = reverse(x)
+@inline Base.inv(::typeof(~)) = ~
 
 """
     cycle_basis(x)
@@ -603,9 +603,9 @@ function invhodge(x1::Form{D,R1}) where {D,R1}
     Form{D,R}(map(term -> eval_invhodge_term(term, x1), algorithm))
 end
 export invhodge
-Base.inv(::typeof(hodge)) = invhodge
+@inline Base.inv(::typeof(hodge)) = invhodge
 
-Base.conj(x::Form{D,R}) where {D,R} = Form{D,R}(conj.(x.elts))
+@inline Base.conj(x::Form{D,R}) where {D,R} = Form{D,R}(conj.(x.elts))
 
 """
     wedge(x, y)
@@ -665,8 +665,8 @@ function wedge(x1::Form{D,R1,T1}, x2::Form{D,R2,T2}) where {D,R1,R2,T1,T2}
     algorithm = wedge_algorithm(Val(D), Val(R1), Val(R2))::SVector
     Form{D,R}(map(term -> eval_wedge_term(term, x1, x2), algorithm))
 end
-wedge(x::Form) = x
-wedge(x1::Form, x2::Form, x3s::Form...) = wedge(wedge(x1, x2), x3s...)
+@inline wedge(x::Form) = x
+@inline wedge(x1::Form, x2::Form, x3s::Form...) = wedge(wedge(x1, x2), x3s...)
 export wedge, ∧
 const ∧ = wedge
 
@@ -678,9 +678,9 @@ Regressive product: `⋆(x ∨ y) = ⋆x ∧ ⋆y`
 (Inspired by Grassmann.jl)
 """
 vee
-vee(x1::Form, x2::Form) = inv(⋆)(⋆x1 ∧ ⋆x2)
-vee(x::Form) = x
-vee(x1::Form, x2::Form, x3s::Form...) = vee(vee(x1, x2), x3s...)
+@inline vee(x1::Form, x2::Form) = inv(⋆)(⋆x1 ∧ ⋆x2)
+@inline vee(x::Form) = x
+@inline vee(x1::Form, x2::Form, x3s::Form...) = vee(vee(x1, x2), x3s...)
 export vee, ∨
 const ∨ = vee
 
@@ -691,14 +691,14 @@ const ∨ = vee
 Dot product: `x ⋅ y = x ∨ ⋆y`
 (Inspired by Grassmann.jl)
 """
-LinearAlgebra.dot(x1::Form, x2::Form) = x1 ∨ ⋆x2
+@inline LinearAlgebra.dot(x1::Form, x2::Form) = x1 ∨ ⋆x2
 export dot, ⋅
 
 # Base.abs2(x::Form) = (x ⋅ x)[]
 # Base.abs(x::Form) = sqrt(abs2(x))
-norm2(x::Missing) = missing
-norm2(x::Number) = abs2(x)
-norm2(x::Form) = (x ⋅ x)[]
+@inline norm2(x::Missing) = missing
+@inline norm2(x::Number) = abs2(x)
+@inline norm2(x::Form) = (x ⋅ x)[]
 export norm2
 LinearAlgebra.norm(x::Form) = sqrt(norm2(x))
 export norm
@@ -710,7 +710,7 @@ export norm
 Dot product: `x × y = ⋆(x ∧ y)`
 (Inspired by Grassmann.jl)
 """
-LinearAlgebra.cross(x1::Form, x2::Form) = ⋆(x1 ∧ x2)
+@inline LinearAlgebra.cross(x1::Form, x2::Form) = ⋆(x1 ∧ x2)
 export cross, ×
 
 ################################################################################
