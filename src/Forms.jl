@@ -450,7 +450,9 @@ Base.:\(a, x::Form{D,R}) where {D,R} = Form{D,R}(a \ x.elts)
 @inline Base.zero(::Type{<:Form{D,R,T}}) where {D,R,T} = zeros(Form{D,R,T})
 @inline Base.zero(::Type{<:Form{D,R}}) where {D,R} = zero(Form{D,R,Float64})
 @inline Base.zero(x::Form) = zero(typeof(x))
+@inline Base.one(::Type{<:Form{D,R,T}}) where {D,R,T} = one(Form{D,0,T})
 @inline Base.one(::Type{<:Form{D,0,T}}) where {D,T} = Form{D,0,T}((one(T),))
+@inline Base.one(::Type{<:Form{D,R}}) where {D,R} = one(Form{D,0})
 @inline Base.one(::Type{<:Form{D,0}}) where {D} = one(Form{D,0,Float64})
 @inline Base.one(::Type{<:Form{D}}) where {D} = one(Form{D,0})
 @inline Base.one(x::Form) = one(typeof(x))
@@ -667,6 +669,9 @@ function wedge(x1::Form{D,R1,T1}, x2::Form{D,R2,T2}) where {D,R1,R2,T1,T2}
 end
 @inline wedge(x::Form) = x
 @inline wedge(x1::Form, x2::Form, x3s::Form...) = wedge(wedge(x1, x2), x3s...)
+@inline wedge(xs::SVector{0,<:Form{D,R,T}}) where {D,R,T} = one(Form{D,0,T})
+@inline wedge(xs::SVector{1,<:Form}) = xs[1]
+@inline wedge(xs::SVector{N,<:Form}) where {N} = ∧(pop(xs)) ∧ last(xs)
 export wedge, ∧
 const ∧ = wedge
 
@@ -681,6 +686,9 @@ vee
 @inline vee(x1::Form, x2::Form) = inv(⋆)(⋆x1 ∧ ⋆x2)
 @inline vee(x::Form) = x
 @inline vee(x1::Form, x2::Form, x3s::Form...) = vee(vee(x1, x2), x3s...)
+@inline vee(xs::SVector{0,<:Form{D,R,T}}) where {D,R,T} = ⋆one(Form{D,0,T})
+@inline vee(xs::SVector{1,<:Form}) = xs[1]
+@inline vee(xs::SVector{N,<:Form}) where {N} = ∨(pop(xs)) ∨ last(xs)
 export vee, ∨
 const ∨ = vee
 

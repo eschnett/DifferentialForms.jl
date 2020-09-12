@@ -227,6 +227,12 @@ end
             @test (x ∧ y) ∧ z === x ∧ (y ∧ z)
             @test x ∧ y ∧ z === (x ∧ y) ∧ z
             @test ∧(x, y, z) === (x ∧ y) ∧ z
+            @test ∧(SVector{0,typeof(x)}()) === one(x)
+            @test ∧(SVector(x)) === x
+            @test ∧(SVector(x, y)) === x ∧ y
+            @test ∧(SVector(x, y, z)) === (x ∧ y) ∧ z
+            @test ∧(SVector{0,typeof(x)}()) ∧ x === x
+            @test x ∧ ∧(SVector{0,typeof(x)}()) === x
         end
     end
 
@@ -260,6 +266,12 @@ end
             @test ⋆(x ∨ y ∨ z) === ⋆x ∧ ⋆y ∧ ⋆z
             @test x ∨ y ∨ z === (x ∨ y) ∨ z
             @test ∨(x, y, z) === (x ∨ y) ∨ z
+            @test ∨(SVector{0,typeof(x)}()) === ⋆one(x)
+            @test ∨(SVector(x)) === x
+            @test ∨(SVector(x, y)) === x ∨ y
+            @test ∨(SVector(x, y, z)) === (x ∨ y) ∨ z
+            @test ∨(SVector{0,typeof(x)}()) ∨ x === x
+            @test x ∨ ∨(SVector{0,typeof(x)}()) === x
         end
     end
 
