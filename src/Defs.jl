@@ -30,6 +30,20 @@ function sort_perm(xs::SVector{D}) where {D}
     return rs, s
 end
 
+function sort_perm(xs::AbstractVector)
+    D = length(xs)
+    D <= 1 && return xs, 0
+    xs1 = @view xs[1:(D - 1)]
+    xend = xs[end]
+    rs1, s1 = sort_perm(xs1)
+    i = findfirst(>(xend), rs1)
+    i === nothing && (i = D)
+    rs = [j < i ? rs1[j] : j == i ? xend : rs1[j - 1] for j in 1:D]
+    s = s1 + D - i
+    # @assert issorted(rs)
+    return rs, s
+end
+
 # Using mergesort, which is probably overkill and slower
 # sort_perm(xs::SVector{0}) = xs, false
 # sort_perm(xs::SVector{1}) = xs, false

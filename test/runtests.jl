@@ -16,12 +16,13 @@ end
 # Random rationals
 function Base.rand(rng::AbstractRNG,
                    ::Random.SamplerType{Rational{T}}) where {T}
-    return Rational{T}(T(rand(rng, -1000:1000)) // 1000)
+    return Rational{T}(T(rand(rng, -1000:1000))//1000)
 end
 
 const BigRat = Rational{BigInt}
 
-include("test-defs.jl")
-include("test-indices.jl")
-include("test-examples.jl")
-include("test-forms.jl")
+@DISABLED include("test-defs.jl")
+@DISABLED include("test-indices.jl")
+@DISABLED include("test-examples.jl")
+@DISABLED include("test-forms.jl")
+include("test-multivectors.jl")

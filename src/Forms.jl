@@ -25,7 +25,7 @@ Form{D,R}(elts::SVector{N,T}) where {D,R,N,T} = Form{D,R,T}(elts)
 # Constructor with added computed type (which must match)
 Form{D,R,T,X}(args...) where {D,R,T,X} = Form{D,R,T}(args...)::Form{D,R,T,X}
 
-const IteratorTypes{T,R} = Union{Base.Generator,Iterators.Flatten}
+const IteratorTypes = Union{Base.Generator,Iterators.Flatten}
 function Form{D,R,T}(gen::IteratorTypes) where {D,R,T}
     N = length(Form{D,R})
     Form{D,R,T}(SVector{N,T}(elts))
@@ -46,7 +46,7 @@ function Form{D,R}(tup::Tuple) where {D,R}
     Form{D,R}(SVector{N}(tup))
 end
 function Form{D,R}(tup::Tuple{}) where {D,R}
-    @error "Cannot create Form from emtpy tuple without specifying type"
+    error("Cannot create Form from emtpy tuple without specifying type")
 end
 
 # Conversions
@@ -157,7 +157,7 @@ function form(::Val{D}, ::Val{R}, ::Type{T}, tup::Tuple) where {D,R,T}
     return Form{D,R,T}(SVector{N,T}(tup))
 end
 function form(::Val{D}, ::Val{R}, tup::Tuple{}) where {D,R}
-    @error "Cannot create Form from emtpy tuple without specifying type"
+    error("Cannot create Form from emtpy tuple without specifying type")
 end
 function form(::Val{D}, ::Val{R}, tup::Tuple) where {D,R}
     N = binomial(Val(D), Val(R))
@@ -265,6 +265,9 @@ function uint2bits(::Val{D}, ubits::Unsigned) where {D}
         bits = Base.setindex(bits, (ubits & (Unsigned(1) << (d - 1))) != 0, d)
     end
     return bits::SVector{D,Bool}
+end
+function uint2bits(::Val{D}, ubits::Integer) where {D}
+    uint2bits(Val(D), Unsigned(ubits))
 end
 
 """
@@ -411,12 +414,17 @@ function Base.rand(::Type{<:Form{D,R,T}}) where {D,R,T}
     N = binomial(Val(D), Val(R))
     return Form{D,R}(rand(SVector{N,T}))
 end
-function Base.zeros(::Type{<:Form{D,R,T}}) where {D,R,T}
+function Base.zero(::Type{<:Form{D,R,T}}) where {D,R,T}
     N = binomial(Val(D), Val(R))
-    return Form{D,R}(zeros(SVector{N,T}))
+    return Form{D,R}(zero(SVector{N,T}))
 end
-Base.zeros(::Type{<:Form{D,R}}) where {D,R} = zeros(Form{D,R,Float64})
-Base.zeros(x::Form) = zeros(typeof(x))
+Base.zero(::Type{<:Form{D,R}}) where {D,R} = zero(Form{D,R,Float64})
+Base.zero(x::Form) = zero(typeof(x))
+
+# Deprecated
+@inline Base.zeros(::Type{<:Form{D,R,T}}) where {D,R,T} = zero(Form{D,R,T})
+@inline Base.zeros(::Type{<:Form{D,R}}) where {D,R} = zeros(Form{D,R,Float64})
+@inline Base.zeros(x::Form) = zeros(typeof(x))
 
 function Defs.unit(::Type{<:Form{D,R,T}}, ind::Integer) where {D,R,T}
     return setindex(zero(Form{D,R,T}), one(T), ind)
@@ -447,9 +455,6 @@ Base.:\(a, x::Form{D,R}) where {D,R} = Form{D,R}(a \ x.elts)
 
 # Forms form an algebra
 
-@inline Base.zero(::Type{<:Form{D,R,T}}) where {D,R,T} = zeros(Form{D,R,T})
-@inline Base.zero(::Type{<:Form{D,R}}) where {D,R} = zero(Form{D,R,Float64})
-@inline Base.zero(x::Form) = zero(typeof(x))
 @inline Base.one(::Type{<:Form{D,R,T}}) where {D,R,T} = one(Form{D,0,T})
 @inline Base.one(::Type{<:Form{D,0,T}}) where {D,T} = Form{D,0,T}((one(T),))
 @inline Base.one(::Type{<:Form{D,R}}) where {D,R} = one(Form{D,0})
@@ -548,18 +553,18 @@ hodge
         elts[ind] = (s, n1)
     end
     @assert !any(==(nothing), elts)
-    SVector{N,Tuple{Bool,Int}}(elts)
+    return SVector{N,Tuple{Bool,Int}}(elts)
 end
-@inline function eval_hodge_term(term::Tuple{Bool,Int}, x1)
+@inline @inbounds function eval_hodge_term(term::Tuple{Bool,Int}, x1)
     s, i = term
-    @inbounds bitsign(s) * x1[i]
+    bitsign(s) * x1[i]
 end
 function hodge(x1::Form{D,R1}) where {D,R1}
     @assert 0 <= R1 <= D
     R = D - R1
     @assert 0 <= R <= D
     algorithm = hodge_algorithm(Val(D), Val(R1))::SVector
-    Form{D,R}(map(term -> eval_hodge_term(term, x1), algorithm))
+    return Form{D,R}(map(term -> eval_hodge_term(term, x1), algorithm))
 end
 export hodge, ⋆
 const ⋆ = hodge
@@ -645,21 +650,19 @@ wedge
     elts = Tuple.(elts)::Vector{NTuple{M,Tuple{Bool,Int,Int}}}
     SVector{N,NTuple{M,Tuple{Bool,Int,Int}}}(elts)
 end
-@inline function eval_wedge_term(term::NTuple{M,Tuple{Bool,Int,Int}}, x1,
-                                 x2) where {M}
+@inline @inbounds function eval_wedge_term(term::NTuple{M,Tuple{Bool,Int,Int}},
+                                           x1, x2) where {M}
     U = typeof(one(eltype(x1)) * one(eltype(x2)))
     M == 0 && return zero(U)
-    @inbounds begin
-        s, i, j = term[1]
-        r = bitsign(s) * x1[i] * x2[j]
-        for m in 2:M
-            s, i, j = term[m]
-            r += bitsign(s) * x1[i] * x2[j]
-        end
+    s, i, j = term[1]
+    r = bitsign(s) * x1[i] * x2[j]
+    for m in 2:M
+        s, i, j = term[m]
+        r += bitsign(s) * x1[i] * x2[j]
     end
     r
 end
-function wedge(x1::Form{D,R1,T1}, x2::Form{D,R2,T2}) where {D,R1,R2,T1,T2}
+function wedge(x1::Form{D,R1}, x2::Form{D,R2}) where {D,R1,R2}
     @assert 0 <= R1 <= D
     @assert 0 <= R2 <= D
     R = R1 + R2
@@ -708,7 +711,7 @@ export dot, ⋅
 @inline norm2(x::Number) = abs2(x)
 @inline norm2(x::Form) = (x ⋅ x)[]
 export norm2
-LinearAlgebra.norm(x::Form) = sqrt(norm2(x))
+@inline LinearAlgebra.norm(x::Form) = sqrt(norm2(x))
 export norm
 
 """
