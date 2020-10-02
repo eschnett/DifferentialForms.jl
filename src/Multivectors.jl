@@ -17,7 +17,7 @@ end
     @assert D >= 0
     M::Unsigned
     @assert count_ones(~zero(M)) >= D
-    count_ones(M)
+    return count_ones(M)
 end
 
 # Constructor without explicit type
@@ -25,37 +25,37 @@ Multivector{D,M}(elts::SVector{N,T}) where {D,M,N,T} = Multivector{D,M,T}(elts)
 
 # Constructor with added computed type (which must match)
 function Multivector{D,M,T,X}(args...) where {D,M,T,X}
-    Multivector{D,M,T}(args...)::Multivector{D,M,T,X}
+    return Multivector{D,M,T}(args...)::Multivector{D,M,T,X}
 end
 
 const IteratorTypes = Union{Base.Generator,Iterators.Flatten}
 function Multivector{D,M,T}(gen::IteratorTypes) where {D,M,T}
     N = length(Multivector{D,M})
-    Multivector{D,M,T}(SVector{N,T}(elts))
+    return Multivector{D,M,T}(SVector{N,T}(elts))
 end
 function Multivector{D,M}(gen::IteratorTypes) where {D,M}
     @assert IteratorEltype(typeof(gen)) == HasEltype()
     N = length(Multivector{D,M})
     T = eltype(gen)
-    Multivector{D,M,T}(SVector{N,T}(elts))
+    return Multivector{D,M,T}(SVector{N,T}(elts))
 end
 
 function Multivector{D,M,T}(tup::Tuple) where {D,M,T}
     N = length(Multivector{D,M})
-    Multivector{D,M,T}(SVector{N,T}(tup))
+    return Multivector{D,M,T}(SVector{N,T}(tup))
 end
 function Multivector{D,M}(tup::Tuple) where {D,M}
     N = length(Multivector{D,M})
-    Multivector{D,M}(SVector{N}(tup))
+    return Multivector{D,M}(SVector{N}(tup))
 end
 function Multivector{D,M}(tup::Tuple{}) where {D,M}
-    error("Cannot create Multivector from emtpy tuple without specifying type")
+    return error("Cannot create Multivector from emtpy tuple without specifying type")
 end
 
 # Conversions
 function Multivector{D,M,T}(f::Multivector{D,M}) where {D,M,T}
     N = length(Multivector{D,M})
-    Multivector{D,M,T}(SVector{N,T}(f.elts))
+    return Multivector{D,M,T}(SVector{N,T}(f.elts))
 end
 
 ################################################################################
@@ -118,7 +118,7 @@ end
 @inline @inbounds function eval_eq_term(term::BinaryTerm, x1, x2)
     x1i1 = term.i1 === nothing ? zero(eltype(x1)) : x1[term.i1]
     x2i2 = term.i2 === nothing ? zero(eltype(x2)) : x2[term.i2]
-    x1i1 == x2i2
+    return x1i1 == x2i2
 end
 function Base.:(==)(x1::Multivector{D,M1,T1},
                     x2::Multivector{D,M2,T2}) where {D,M1,M2,T1,T2}
@@ -126,8 +126,7 @@ function Base.:(==)(x1::Multivector{D,M1,T1},
     # return all(map(term -> eval_eq_term(term, x1, x2), algorithm))
     # We want left-to-right evaluation without shortcuts to enable
     # SIMD vectorization
-    return mapfoldl(term -> eval_eq_term(term, x1, x2), &, algorithm;
-                    init = true)
+    return mapfoldl(term -> eval_eq_term(term, x1, x2), &, algorithm; init=true)
 end
 # function Base.:(==)(x1::Multivector{D}, x2::Multivector{D}) where {D}
 #     return all(iszero, x1 - x2)
@@ -146,7 +145,7 @@ Base.firstindex(::Type{<:Multivector}) = 1
 Base.firstindex(x::Multivector) = firstindex(typeof(x))
 Base.iterate(x::Multivector, state...) = iterate(x.elts, state...)
 function Base.lastindex(::Type{<:Multivector{D,M}}) where {D,M}
-    length(Multivector{D,M})
+    return length(Multivector{D,M})
 end
 Base.lastindex(x::Multivector) = lastindex(typeof(x))
 Base.length(::Type{<:Multivector{D,M}}) where {D,M} = count_ones(M)
@@ -178,7 +177,7 @@ function Base.zero(::Type{<:Multivector{D,M,T}}) where {D,M,T}
     return Multivector{D,M}(zero(SVector{N,T}))
 end
 function Base.zero(::Type{<:Multivector{D,M}}) where {D,M}
-    zero(Multivector{D,M,Float64})
+    return zero(Multivector{D,M,Float64})
 end
 Base.zero(::Type{<:Multivector{D}}) where {D} = zero(Multivector{D,0})
 Base.zero(x::Multivector) = zero(typeof(x))
@@ -204,7 +203,7 @@ Base.:-(x::Multivector{D,M}) where {D,M} = Multivector{D,M}(-x.elts)
 @inline @inbounds function eval_add_term(term::BinaryTerm, x1, x2)
     term.i1 === nothing && return x2[term.i2]
     term.i2 === nothing && return x1[term.i1]
-    x1[term.i1] + x2[term.i2]
+    return x1[term.i1] + x2[term.i2]
 end
 function Base.:+(x1::Multivector{D,M1}, x2::Multivector{D,M2}) where {D,M1,M2}
     M = M1 | M2
@@ -216,7 +215,7 @@ end
 @inline @inbounds function eval_sub_term(term::BinaryTerm, x1, x2)
     term.i1 === nothing && return -x2[term.i2]
     term.i2 === nothing && return x1[term.i1]
-    x1[term.i1] - x2[term.i2]
+    return x1[term.i1] - x2[term.i2]
 end
 function Base.:-(x1::Multivector{D,M1}, x2::Multivector{D,M2}) where {D,M1,M2}
     M = M1 | M2
@@ -333,13 +332,13 @@ end
 # one
 
 @inline function Base.one(::Type{<:Multivector{D,M,T}}) where {D,M,T}
-    unit(Multivector{D,M,T})
+    return unit(Multivector{D,M,T})
 end
 @inline function Base.one(::Type{<:Multivector{D,M}}) where {D,M}
-    one(Multivector{D,M,Float64})
+    return one(Multivector{D,M,Float64})
 end
 @inline function Base.one(::Type{<:Multivector{D}}) where {D}
-    one(Multivector{D,UInt64(1)})
+    return one(Multivector{D,UInt64(1)})
 end
 @inline Base.one(x::Multivector) = one(typeof(x))
 
@@ -396,7 +395,7 @@ end
 end
 @inline @inbounds function eval_hodge_term(term::Tuple{Bool,Int}, x1)
     s, i = term
-    bitsign(s) * x1[i]
+    return bitsign(s) * x1[i]
 end
 function Forms.hodge(x1::Multivector{D,M1}) where {D,M1}
     @assert 0 <= D
@@ -441,7 +440,7 @@ end
 end
 @inline @inbounds function eval_invhodge_term(term::Tuple{Bool,Int}, x1)
     s, i = term
-    bitsign(s) * x1[i]
+    return bitsign(s) * x1[i]
 end
 function Forms.invhodge(x1::Multivector{D,M1}) where {D,M1}
     @assert 0 <= D
@@ -456,7 +455,7 @@ end
 # conj
 
 @inline function Base.conj(x::Multivector{D,M}) where {D,M}
-    Multivector{D,M}(conj.(x.elts))
+    return Multivector{D,M}(conj.(x.elts))
 end
 
 # wedge (∧, \\wedge)
@@ -523,7 +522,7 @@ end
         term = elt.terms[n]
         r += bitsign(term.sign) * x1[term.n1] * x2[term.n2]
     end
-    r
+    return r
 end
 function Forms.wedge(x1::Multivector{D,M1},
                      x2::Multivector{D,M2}) where {D,M1,M2}
@@ -534,19 +533,19 @@ function Forms.wedge(x1::Multivector{D,M1},
     M == 0 &&
         return zero(Multivector{D,M,typeof(one(eltype(x1)) * one(eltype(x2)))})
     algorithm = wedge_algorithm(Val(D), Val(M1), Val(M2))::Tuple
-    Multivector{D,M}(map(elt -> eval_wedge_elt(elt, x1, x2), algorithm))
+    return Multivector{D,M}(map(elt -> eval_wedge_elt(elt, x1, x2), algorithm))
 end
 @inline Forms.wedge(x::Multivector) = x
 @inline function Forms.wedge(x1::Multivector, x2::Multivector,
                              x3s::Multivector...)
-    wedge(wedge(x1, x2), x3s...)
+    return wedge(wedge(x1, x2), x3s...)
 end
 @inline function Forms.wedge(xs::SVector{0,<:Multivector{D,M,T}}) where {D,M,T}
-    one(Multivector{D,one(M),T})
+    return one(Multivector{D,one(M),T})
 end
 @inline Forms.wedge(xs::SVector{1,<:Multivector}) = xs[1]
 @inline function Forms.wedge(xs::SVector{N,<:Multivector}) where {N}
-    ∧(pop(xs)) ∧ last(xs)
+    return ∧(pop(xs)) ∧ last(xs)
 end
 
 # vee (∨, \\vee)
@@ -556,25 +555,25 @@ end
 @inline vee′(x1::Multivector) = x1
 @inline vee′(x1::Multivector, x2::Multivector) = x1 ∧ ⋆x2
 @inline function vee′(x1::Multivector, x2::Multivector, x3s::Multivector...)
-    vee′(x1 ∧ ⋆x2, x3s...)
+    return vee′(x1 ∧ ⋆x2, x3s...)
 end
 @inline function Forms.vee(x1::Multivector, x2::Multivector,
                            x3s::Multivector...)
     # vee(x1 ∨ x2, x3s...)
-    inv(⋆)(vee′(⋆x1, x2, x3s...))
+    return inv(⋆)(vee′(⋆x1, x2, x3s...))
 end
 @inline function Forms.vee(xs::SVector{0,<:Multivector{D,M,T}}) where {D,M,T}
-    ⋆one(Multivector{D,one(M),T})
+    return ⋆one(Multivector{D,one(M),T})
 end
 @inline Forms.vee(xs::SVector{1,<:Multivector}) = xs[1]
 @inline function vee′(xs::SVector{0,<:Multivector{D,M,T}}) where {D,M,T}
-    one(Multivector{D,one(M),T})
+    return one(Multivector{D,one(M),T})
 end
 @inline vee′(xs::SVector{1,<:Multivector}) = ⋆xs[1]
 @inline vee′(xs::SVector{N,<:Multivector}) where {N} = vee′(pop(xs)) ∧ ⋆last(xs)
 @inline function Forms.vee(xs::SVector{N,<:Multivector}) where {N}
     # vee(pop(xs)) ∨ last(xs)
-    inv(⋆)(vee′(xs))
+    return inv(⋆)(vee′(xs))
 end
 
 # dot (⋅, \\cdot)
@@ -651,7 +650,7 @@ end
         term = elt.terms[n]
         r += bitsign(term.sign) * x1[term.n1] * x2[term.n2]
     end
-    r
+    return r
 end
 function Base.:*(x1::Multivector{D,M1}, x2::Multivector{D,M2}) where {D,M1,M2}
     @assert 0 <= D
@@ -661,14 +660,14 @@ function Base.:*(x1::Multivector{D,M1}, x2::Multivector{D,M2}) where {D,M1,M2}
     M == 0 &&
         return zero(Multivector{D,M,typeof(one(eltype(x1)) * one(eltype(x2)))})
     algorithm = mul_algorithm(Val(D), Val(M1), Val(M2))::Tuple
-    Multivector{D,M}(map(elt -> eval_mul_elt(elt, x1, x2), algorithm))
+    return Multivector{D,M}(map(elt -> eval_mul_elt(elt, x1, x2), algorithm))
 end
 @inline Base.:*(x::Multivector) = x
 @inline function Base.:*(x1::Multivector, x2::Multivector, x3s::Multivector...)
-    *(x1 * x2, x3s...)
+    return *(x1 * x2, x3s...)
 end
 @inline function Base.:*(xs::SVector{0,<:Multivector{D,M,T}}) where {D,M,T}
-    one(Multivector{D,one(M),T})
+    return one(Multivector{D,one(M),T})
 end
 @inline Base.:*(xs::SVector{1,<:Multivector}) = xs[1]
 @inline Base.:*(xs::SVector{N,<:Multivector}) where {N} = *(pop(xs)) * last(xs)

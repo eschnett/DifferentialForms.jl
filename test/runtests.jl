@@ -19,7 +19,7 @@ Random.seed!(0)
 # Random rationals
 function Base.rand(rng::AbstractRNG,
                    ::Random.SamplerType{Rational{T}}) where {T}
-    return Rational{T}(T(rand(rng, -1000:1000))//1000)
+    return Rational{T}(T(rand(rng, -1000:1000)) // 1000)
 end
 
 const BigRat = Rational{BigInt}

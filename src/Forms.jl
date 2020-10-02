@@ -28,30 +28,30 @@ Form{D,R,T,X}(args...) where {D,R,T,X} = Form{D,R,T}(args...)::Form{D,R,T,X}
 const IteratorTypes = Union{Base.Generator,Iterators.Flatten}
 function Form{D,R,T}(gen::IteratorTypes) where {D,R,T}
     N = length(Form{D,R})
-    Form{D,R,T}(SVector{N,T}(elts))
+    return Form{D,R,T}(SVector{N,T}(elts))
 end
 function Form{D,R}(gen::IteratorTypes) where {D,R}
     @assert IteratorEltype(typeof(gen)) == HasEltype()
     N = length(Form{D,R})
     T = eltype(gen)
-    Form{D,R,T}(SVector{N,T}(elts))
+    return Form{D,R,T}(SVector{N,T}(elts))
 end
 
 function Form{D,R,T}(tup::Tuple) where {D,R,T}
     N = length(Form{D,R})
-    Form{D,R,T}(SVector{N,T}(tup))
+    return Form{D,R,T}(SVector{N,T}(tup))
 end
 function Form{D,R}(tup::Tuple) where {D,R}
     N = length(Form{D,R})
-    Form{D,R}(SVector{N}(tup))
+    return Form{D,R}(SVector{N}(tup))
 end
 function Form{D,R}(tup::Tuple{}) where {D,R}
-    error("Cannot create Form from emtpy tuple without specifying type")
+    return error("Cannot create Form from emtpy tuple without specifying type")
 end
 
 # Conversions
 function Form{D,R,T}(f::Form{D,R}) where {D,R,T}
-    Form{D,R,T}(SVector{length(Form{D,R}),T}(f.elts))
+    return Form{D,R,T}(SVector{length(Form{D,R}),T}(f.elts))
 end
 
 Base.convert(::Type{T}, x::Form{D,0,T}) where {D,T} = x.elts[1]
@@ -92,7 +92,7 @@ end
 Base.hash(x1::Form, h::UInt) = hash(hash(x1.elts, h), UInt(0xc060e76f))
 function Base.isapprox(x1::Form{D,R}, x2::Form{D,R}; kw...) where {D,R}
     scale = max(norm(x1), norm(2))
-    isapprox(scale + norm(x1 - x2), scale; kw...)
+    return isapprox(scale + norm(x1 - x2), scale; kw...)
 end
 
 ################################################################################
@@ -157,7 +157,7 @@ function form(::Val{D}, ::Val{R}, ::Type{T}, tup::Tuple) where {D,R,T}
     return Form{D,R,T}(SVector{N,T}(tup))
 end
 function form(::Val{D}, ::Val{R}, tup::Tuple{}) where {D,R}
-    error("Cannot create Form from emtpy tuple without specifying type")
+    return error("Cannot create Form from emtpy tuple without specifying type")
 end
 function form(::Val{D}, ::Val{R}, tup::Tuple) where {D,R}
     N = binomial(Val(D), Val(R))
@@ -267,7 +267,7 @@ function uint2bits(::Val{D}, ubits::Unsigned) where {D}
     return bits::SVector{D,Bool}
 end
 function uint2bits(::Val{D}, ubits::Integer) where {D}
-    uint2bits(Val(D), Unsigned(ubits))
+    return uint2bits(Val(D), Unsigned(ubits))
 end
 
 """
@@ -557,7 +557,7 @@ hodge
 end
 @inline @inbounds function eval_hodge_term(term::Tuple{Bool,Int}, x1)
     s, i = term
-    bitsign(s) * x1[i]
+    return bitsign(s) * x1[i]
 end
 function hodge(x1::Form{D,R1}) where {D,R1}
     @assert 0 <= R1 <= D
@@ -596,7 +596,7 @@ invhodge
         elts[ind] = (s, n1)
     end
     @assert !any(==(nothing), elts)
-    SVector{N,Tuple{Bool,Int}}(elts)
+    return SVector{N,Tuple{Bool,Int}}(elts)
 end
 @inline function eval_invhodge_term(term::Tuple{Bool,Int}, x1)
     s, i = term
@@ -607,7 +607,7 @@ function invhodge(x1::Form{D,R1}) where {D,R1}
     R = D - R1
     @assert 0 <= R <= D
     algorithm = invhodge_algorithm(Val(D), Val(R1))::SVector
-    Form{D,R}(map(term -> eval_invhodge_term(term, x1), algorithm))
+    return Form{D,R}(map(term -> eval_invhodge_term(term, x1), algorithm))
 end
 export invhodge
 @inline Base.inv(::typeof(hodge)) = invhodge
@@ -648,7 +648,7 @@ wedge
     M = length(elts[1])
     @assert all(elt -> length(elt) == M, elts)
     elts = Tuple.(elts)::Vector{NTuple{M,Tuple{Bool,Int,Int}}}
-    SVector{N,NTuple{M,Tuple{Bool,Int,Int}}}(elts)
+    return SVector{N,NTuple{M,Tuple{Bool,Int,Int}}}(elts)
 end
 @inline @inbounds function eval_wedge_term(term::NTuple{M,Tuple{Bool,Int,Int}},
                                            x1, x2) where {M}
@@ -660,7 +660,7 @@ end
         s, i, j = term[m]
         r += bitsign(s) * x1[i] * x2[j]
     end
-    r
+    return r
 end
 function wedge(x1::Form{D,R1}, x2::Form{D,R2}) where {D,R1,R2}
     @assert 0 <= R1 <= D
@@ -668,7 +668,7 @@ function wedge(x1::Form{D,R1}, x2::Form{D,R2}) where {D,R1,R2}
     R = R1 + R2
     @assert 0 <= R <= D
     algorithm = wedge_algorithm(Val(D), Val(R1), Val(R2))::SVector
-    Form{D,R}(map(term -> eval_wedge_term(term, x1, x2), algorithm))
+    return Form{D,R}(map(term -> eval_wedge_term(term, x1, x2), algorithm))
 end
 @inline wedge(x::Form) = x
 @inline wedge(x1::Form, x2::Form, x3s::Form...) = wedge(wedge(x1, x2), x3s...)
@@ -756,7 +756,7 @@ tensorsum
             elts[n] = nothing
         end
     end
-    Tuple(elts)
+    return Tuple(elts)
 end
 @inline function eval_tensorsum_term(term::Nothing, x1, x2)
     U = typeof(one(eltype(x1)) * one(eltype(x2)))
@@ -765,14 +765,14 @@ end
 @inline function eval_tensorsum_term(term::Tuple{Val{I},Int}, x1, x2) where {I}
     _, i = term
     I == 1 && return (@inbounds x1[i])
-    I == 2 && return (@inbounds x2[i])
+    return I == 2 && return (@inbounds x2[i])
 end
 function tensorsum(x1::Form{D1,R}, x2::Form{D2,R}) where {D1,D2,R}
     @assert 0 < R <= D1
     @assert 0 < R <= D2
     D = D1 + D2
     algorithm = tensorsum_algorithm(Val(D1), Val(D2), Val(R))
-    Form{D,R}(map(term -> eval_tensorsum_term(term, x1, x2), algorithm))
+    return Form{D,R}(map(term -> eval_tensorsum_term(term, x1, x2), algorithm))
 end
 tensorsum(x::Form) = x
 function tensorsum(x1::Form, x2::Form, x3s::Form...)
@@ -808,7 +808,7 @@ tensorproduct
             elts[n] = nothing
         end
     end
-    Tuple(elts)
+    return Tuple(elts)
 end
 @inline function eval_tensorproduct_term(term::Nothing, x1, x2)
     U = typeof(one(eltype(x1)) * one(eltype(x2)))
@@ -824,7 +824,8 @@ function tensorproduct(x1::Form{D1,R1}, x2::Form{D2,R2}) where {D1,R1,D2,R2}
     D = D1 + D2
     R = R1 + R2
     algorithm = tensorproduct_algorithm(Val(D1), Val(R1), Val(D2), Val(R2))
-    Form{D,R}(map(term -> eval_tensorproduct_term(term, x1, x2), algorithm))
+    return Form{D,R}(map(term -> eval_tensorproduct_term(term, x1, x2),
+                         algorithm))
 end
 tensorproduct(x::Form) = x
 function tensorproduct(x1::Form, x2::Form, x3s::Form...)
