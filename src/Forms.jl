@@ -381,7 +381,7 @@ Base.size(x::Form, r) = size(typeof(x))
 
 Base.getindex(x::Form, ind::Integer) = x.elts[ind]
 function Base.getindex(x::Form{D,R}, inds::SVector{R}) where {D,R}
-    return x[lst2lin(Val(D), Val(R), inds)]
+    return x.elts[lst2lin(Val(D), Val(R), inds)]
 end
 Base.getindex(x::Form, inds::Tuple{}) = x[SVector{0,Int}()]
 Base.getindex(x::Form, inds::Tuple) = x[SVector(inds)]

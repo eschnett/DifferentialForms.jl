@@ -71,6 +71,28 @@ end
     @test w == z
 end
 
+@testset "Forms as collections D=$D R=$R" for D in 0:Dmax, R in 0:D
+    T = Int
+    x = rand(Form{D,R,T})
+
+    N = length(x)
+    for n in 1:N
+        y = Base.setindex(x, x[n], n)
+        @assert y === x
+
+        inds = Forms.lin2lst(Val(D), Val(R), n)::SVector{R,Int}
+        y = Base.setindex(x, x[inds], inds)
+        @assert y === x
+
+        tup = Tuple(inds)::NTuple{R,Int}
+        y = Base.setindex(x, x[tup], tup)
+        @assert y === x
+
+        y = Base.setindex(x, x[inds...], inds...)
+        @assert y === x
+    end
+end
+
 @testset "Vector space operations on forms D=$D R=$R" for D in 0:Dmax, R in 0:D
     # Using === instead of == for comparisons to catch wrong types
     T = Rational{Int64}
