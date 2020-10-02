@@ -83,6 +83,9 @@ end
 
     # Vector space
 
+    @test iszero(n)
+    @test iszero(x) === (x === n)
+
     @test +x === x
     @test (x + y) + z === x + (y + z)
 
@@ -139,6 +142,9 @@ end
     b = rand(T)
 
     # Multiplicative structure
+
+    @test isone(e)
+    @test !isone(2 * e)
 
     # units
     if D == 2 && R1 == 1 && R2 == 1

@@ -420,6 +420,7 @@ function Base.zero(::Type{<:Form{D,R,T}}) where {D,R,T}
 end
 Base.zero(::Type{<:Form{D,R}}) where {D,R} = zero(Form{D,R,Float64})
 Base.zero(x::Form) = zero(typeof(x))
+Base.iszero(x::Form) = all(iszero, x)
 
 # Deprecated
 @inline Base.zeros(::Type{<:Form{D,R,T}}) where {D,R,T} = zero(Form{D,R,T})
@@ -461,6 +462,7 @@ Base.:\(a, x::Form{D,R}) where {D,R} = Form{D,R}(a \ x.elts)
 @inline Base.one(::Type{<:Form{D,0}}) where {D} = one(Form{D,0,Float64})
 @inline Base.one(::Type{<:Form{D}}) where {D} = one(Form{D,0})
 @inline Base.one(x::Form) = one(typeof(x))
+@inline Base.isone(x::Form{D,0}) where {D} = isone(x[])
 
 """
     reverse(x)
