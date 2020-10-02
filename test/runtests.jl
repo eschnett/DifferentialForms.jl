@@ -24,8 +24,8 @@ end
 
 const BigRat = Rational{BigInt}
 
-@DISABLED include("test-defs.jl")
-@DISABLED include("test-indices.jl")
-@DISABLED include("test-examples.jl")
-@DISABLED include("test-forms.jl")
+include("test-defs.jl")
+include("test-indices.jl")
+include("test-examples.jl")
+include("test-forms.jl")
 include("test-multivectors.jl")
