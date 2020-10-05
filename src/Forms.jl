@@ -70,13 +70,18 @@ frank(x::Form) = frank(typeof(x))
 
 # I/O
 
-function Base.show(io::IO, x::Form)
-    print(io, "$(eltype(x))⟦")
+function Base.show(io::IO, x::Form{D,R,T}) where {D,R,T}
+    print(io, "$T⟦")
     for n in 1:length(x)
-        n > 1 && print(io, ",")
-        print(io, x[n])
+        n > 1 && print(io, ", ")
+        inds = lin2lst(Val(D), Val(R), n)
+        print(io, "[")
+        for ind in inds
+            print(io, ind)
+        end
+        print(io, "]:", x[n])
     end
-    print(io, "⟧{$(fdim(x)),$(frank(x))}")
+    print(io, "⟧{$D,$R}")
     return nothing
 end
 
