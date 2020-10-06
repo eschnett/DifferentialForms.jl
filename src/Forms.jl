@@ -716,7 +716,9 @@ export dot, ⋅
 # Base.abs(x::Form) = sqrt(abs2(x))
 @inline norm2(x::Missing) = missing
 @inline norm2(x::Number) = abs2(x)
-@inline norm2(x::Form) = (x ⋅ x)[]
+@inline norm2(x::AbstractArray) = sum(norm2.(x))
+# @inline norm2(x::Form) = (x ⋅ x)[]
+@inline norm2(x::Form) = norm2(x.elts)
 export norm2
 @inline LinearAlgebra.norm(x::Form) = sqrt(norm2(x))
 export norm

@@ -321,6 +321,17 @@ end
     @test norm(y + y2) <= norm(y) + norm(y2) ||
           norm(y + y2) ≈ norm(y) + norm(y2)
 
+    xs = rand(Form{D,R1,SVector{4,T}})
+    xs2 = rand(Form{D,R1,SVector{4,T}})
+    norm2(xs)::T
+    @test norm2(xs) >= 0
+    @test norm2(a * xs) == norm2(a) * norm2(xs)
+    norm(xs)::float(T)
+    @test norm(xs) ≈ sqrt(norm2(xs))
+    @test norm(a * xs) ≈ norm(a) * norm(xs)
+    @test norm(xs + xs2) <= norm(xs) + norm(xs2) ||
+          norm(xs + xs2) ≈ norm(xs) + norm(xs2)
+
     # cross product: x × y = ⋆(x ∧ y)
     Rcross = D - (R1 + R2)
     if 0 <= Rcross
