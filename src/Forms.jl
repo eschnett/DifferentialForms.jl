@@ -20,6 +20,7 @@ export Form
 end
 
 # Constructor without explicit type
+Form{D,R}(x::Form{D,R}) where {D,R} = x
 Form{D,R}(elts::SVector{N,T}) where {D,R,N,T} = Form{D,R,T}(elts)
 
 # Constructor with added computed type (which must match)
