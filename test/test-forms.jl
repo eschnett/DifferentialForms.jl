@@ -71,6 +71,26 @@ end
     @test w == z
 end
 
+@testset "Comparing forms D=$D R=$R" for D in 0:Dmax, R in 0:D
+    T = Int
+
+    for n in 1:100
+        x = rand(Form{D,R,T})
+        y = rand(Form{D,R,T})
+        isequal(x, y) && continue
+
+        @test x == x
+        @test isequal(x, x)
+        @test hash(x) == hash(x)
+        @test !isless(x, x)
+
+        @test x != y
+        @test !isequal(x, y)
+        @test hash(x) != hash(y)
+        @test isless(x, y) || isless(y, x)
+    end
+end
+
 @testset "Forms as collections D=$D R=$R" for D in 0:Dmax, R in 0:D
     T = Int
     x = rand(Form{D,R,T})
@@ -78,18 +98,18 @@ end
     N = length(x)
     for n in 1:N
         y = Base.setindex(x, x[n], n)
-        @assert y === x
+        @test y === x
 
         inds = Forms.lin2lst(Val(D), Val(R), n)::SVector{R,Int}
         y = Base.setindex(x, x[inds], inds)
-        @assert y === x
+        @test y === x
 
         tup = Tuple(inds)::NTuple{R,Int}
         y = Base.setindex(x, x[tup], tup)
-        @assert y === x
+        @test y === x
 
         y = Base.setindex(x, x[inds...], inds...)
-        @assert y === x
+        @test y === x
     end
 end
 
