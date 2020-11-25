@@ -86,6 +86,28 @@ function Base.show(io::IO, x::Form{D,R,T}) where {D,R,T}
     return nothing
 end
 
+function Base.show(io::IO, mime::MIME"text/plain", x::Form{D,R,T}) where {D,R,T}
+    skiptype = get(io, :typeinfo, Any) <: Form{D,R,T}
+    if !skiptype
+        print(io, "$T{$D,$R}")
+    end
+    print(io, "⟦")
+    for n in 1:length(x)
+        n > 1 && print(io, ", ")
+        inds = lin2lst(Val(D), Val(R), n)
+        if !get(io, :compact, false)
+            print(io, "[")
+            for ind in inds
+                print(io, ind)
+            end
+            print(io, "]:")
+        end
+        show(IOContext(io, :compact => true, :typeinfo => T), mime, x[n])
+    end
+    print(io, "⟧")
+    return nothing
+end
+
 ################################################################################
 
 # Comparisons
