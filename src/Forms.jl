@@ -29,13 +29,13 @@ Form{D,R,T,X}(args...) where {D,R,T,X} = Form{D,R,T}(args...)::Form{D,R,T,X}
 const IteratorTypes = Union{Base.Generator,Iterators.Flatten}
 function Form{D,R,T}(gen::IteratorTypes) where {D,R,T}
     N = length(Form{D,R})
-    return Form{D,R,T}(SVector{N,T}(elts))
+    return Form{D,R,T}(SVector{N,T}(gen))
 end
 function Form{D,R}(gen::IteratorTypes) where {D,R}
     @assert IteratorEltype(typeof(gen)) == HasEltype()
     N = length(Form{D,R})
     T = eltype(gen)
-    return Form{D,R,T}(SVector{N,T}(elts))
+    return Form{D,R,T}(SVector{N,T}(gen))
 end
 
 function Form{D,R,T}(tup::Tuple) where {D,R,T}
@@ -47,7 +47,7 @@ function Form{D,R}(tup::Tuple) where {D,R}
     return Form{D,R}(SVector{N}(tup))
 end
 function Form{D,R}(tup::Tuple{}) where {D,R}
-    return error("Cannot create Form from emtpy tuple without specifying type")
+    return throw(TypeError("Cannot create Form from emtpy tuple without specifying type"))
 end
 
 # Conversions
