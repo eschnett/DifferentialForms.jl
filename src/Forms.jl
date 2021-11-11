@@ -160,18 +160,15 @@ export form
 
 # TODO: Use `@generated` only to generate the index lists; access the
 # array in a regular funcion
-@generated function form(::Val{D}, ::Val{R}, ::Type{T},
-                         arr::AbstractArray{T,R}) where {D,R,T}
+@generated function form(::Val{D}, ::Val{R}, ::Type{T}, arr::AbstractArray{T,R}) where {D,R,T}
     N = binomial(D, R)
     quote
         @assert all(==(D), size(arr))
-        elts = SVector{$N,T}($([:(arr[$(lin2lst(Val(D), Val(R), n)...)])
-                                for n in 1:N]...))
+        elts = SVector{$N,T}($([:(arr[$(lin2lst(Val(D), Val(R), n)...)]) for n in 1:N]...))
         return Form{D,R,T}(elts)
     end
 end
-function form(::Val{D}, ::Val{R}, ::Type{T},
-              arr::AbstractArray{U,R}) where {D,R,T,U}
+function form(::Val{D}, ::Val{R}, ::Type{T}, arr::AbstractArray{U,R}) where {D,R,T,U}
     return Form{D,R,T}(Form{D,R,U}(arr))
 end
 function form(::Val{D}, ::Val{R}, arr::AbstractArray) where {D,R}
@@ -199,12 +196,10 @@ end
 
 # TODO: Use `@generated` only to generate the index lists; call the
 # function in a regular funcion
-@generated function form(::Val{D}, ::Val{R}, ::Type{T},
-                         fun::Function) where {D,R,T}
+@generated function form(::Val{D}, ::Val{R}, ::Type{T}, fun::Function) where {D,R,T}
     N = binomial(D, R)
     quote
-        elts = SVector{$N,T}($([:(fun($(lin2lst(Val(D), Val(R), n)...))::T)
-                                for n in 1:N]...))
+        elts = SVector{$N,T}($([:(fun($(lin2lst(Val(D), Val(R), n)...))::T) for n in 1:N]...))
         return Form{D,R,T}(elts)
     end
 end
@@ -303,8 +298,7 @@ all bit indices for dimension `D` with rank `R`
 function dim_bitindices_slow(D::Int, R::Int)
     @assert 0 <= R <= D
     bitindices = Vector{SVector{D,Bool}}()
-    for ibits in
-        CartesianIndex(ntuple(d -> 0, D)):CartesianIndex(ntuple(d -> 1, D))
+    for ibits in CartesianIndex(ntuple(d -> 0, D)):CartesianIndex(ntuple(d -> 1, D))
         bits = SVector{D,Bool}(Tuple(ibits))
         if count(bits) == R
             push!(bitindices, bits)
@@ -573,10 +567,7 @@ hodge
     for n1 in 1:N1
         bits1 = lin2bit(Val(D), Val(R1), n1)
         bitsr = .~bits1
-        _, parity = sort_perm(SVector{R1 + R,Int}(bit2lst(Val(D), Val(R1),
-                                                          bits1)...,
-                                                  bit2lst(Val(D), Val(R),
-                                                          bitsr)...))
+        _, parity = sort_perm(SVector{R1 + R,Int}(bit2lst(Val(D), Val(R1), bits1)..., bit2lst(Val(D), Val(R), bitsr)...))
         s = isodd(parity)
         ind = bit2lin(Val(D), Val(R), bitsr)
         elts[ind] = (s, n1)
@@ -616,10 +607,7 @@ invhodge
         bits1 = lin2bit(Val(D), Val(R1), n1)
         bitsr = .~bits1
         # The "opposite" parity as `hodge`
-        _, parity = sort_perm(SVector{R + R1,Int}(bit2lst(Val(D), Val(R),
-                                                          bitsr)...,
-                                                  bit2lst(Val(D), Val(R1),
-                                                          bits1)...))
+        _, parity = sort_perm(SVector{R + R1,Int}(bit2lst(Val(D), Val(R), bitsr)..., bit2lst(Val(D), Val(R1), bits1)...))
         s = isodd(parity)
         ind = bit2lin(Val(D), Val(R), bitsr)
         elts[ind] = (s, n1)
@@ -650,8 +638,7 @@ export invhodge
 Outer producxt
 """
 wedge
-@generated function wedge_algorithm(::Val{D}, ::Val{R1},
-                                    ::Val{R2}) where {D,R1,R2}
+@generated function wedge_algorithm(::Val{D}, ::Val{R1}, ::Val{R2}) where {D,R1,R2}
     @assert 0 <= R1 <= D
     @assert 0 <= R2 <= D
     R = R1 + R2
@@ -665,10 +652,7 @@ wedge
         bits2 = lin2bit(Val(D), Val(R2), n2)
         if !any(bits1 .& bits2)
             bitsr = bits1 .| bits2
-            _, parity = sort_perm(SVector{R1 + R2,Int}(bit2lst(Val(D), Val(R1),
-                                                               bits1)...,
-                                                       bit2lst(Val(D), Val(R2),
-                                                               bits2)...))
+            _, parity = sort_perm(SVector{R1 + R2,Int}(bit2lst(Val(D), Val(R1), bits1)..., bit2lst(Val(D), Val(R2), bits2)...))
             s = isodd(parity)
             ind = bit2lin(Val(D), Val(R), bitsr)
             push!(elts[ind], (s, n1, n2))
@@ -679,8 +663,7 @@ wedge
     elts = Tuple.(elts)::Vector{NTuple{M,Tuple{Bool,Int,Int}}}
     return SVector{N,NTuple{M,Tuple{Bool,Int,Int}}}(elts)
 end
-@inline @inbounds function eval_wedge_term(term::NTuple{M,Tuple{Bool,Int,Int}},
-                                           x1, x2) where {M}
+@inline @inbounds function eval_wedge_term(term::NTuple{M,Tuple{Bool,Int,Int}}, x1, x2) where {M}
     U = typeof(one(eltype(x1)) * one(eltype(x2)))
     M == 0 && return zero(U)
     s, i, j = term[1]
@@ -764,8 +747,7 @@ export cross, ×
 Tensor sum
 """
 tensorsum
-@generated function tensorsum_algorithm(::Val{D1}, ::Val{D2},
-                                        ::Val{R}) where {D1,D2,R}
+@generated function tensorsum_algorithm(::Val{D1}, ::Val{D2}, ::Val{R}) where {D1,D2,R}
     @assert 0 < R <= D1
     @assert 0 < R <= D2
     D = D1 + D2
@@ -819,8 +801,7 @@ export tensorsum, ⊕
 Tensor product
 """
 tensorproduct
-@generated function tensorproduct_algorithm(::Val{D1}, ::Val{R1}, ::Val{D2},
-                                            ::Val{R2}) where {D1,R1,D2,R2}
+@generated function tensorproduct_algorithm(::Val{D1}, ::Val{R1}, ::Val{D2}, ::Val{R2}) where {D1,R1,D2,R2}
     @assert 0 <= R1 <= D1
     @assert 0 <= R2 <= D2
     D = D1 + D2
@@ -855,8 +836,7 @@ function tensorproduct(x1::Form{D1,R1}, x2::Form{D2,R2}) where {D1,R1,D2,R2}
     D = D1 + D2
     R = R1 + R2
     algorithm = tensorproduct_algorithm(Val(D1), Val(R1), Val(D2), Val(R2))
-    return Form{D,R}(map(term -> eval_tensorproduct_term(term, x1, x2),
-                         algorithm))
+    return Form{D,R}(map(term -> eval_tensorproduct_term(term, x1, x2), algorithm))
 end
 tensorproduct(x::Form) = x
 function tensorproduct(x1::Form, x2::Form, x3s::Form...)

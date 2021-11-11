@@ -84,8 +84,7 @@ struct BinaryTerm{I1,I2}
     i1::I1
     i2::I2
 end
-@generated function binary_algorithm(::Val{D}, ::Val{M1},
-                                     ::Val{M2}) where {D,M1,M2}
+@generated function binary_algorithm(::Val{D}, ::Val{M1}, ::Val{M2}) where {D,M1,M2}
     D::Int
     @assert D >= 0
     M1::Unsigned
@@ -120,8 +119,7 @@ end
     x2i2 = term.i2 === nothing ? zero(eltype(x2)) : x2[term.i2]
     return x1i1 == x2i2
 end
-function Base.:(==)(x1::Multivector{D,M1,T1},
-                    x2::Multivector{D,M2,T2}) where {D,M1,M2,T1,T2}
+function Base.:(==)(x1::Multivector{D,M1,T1}, x2::Multivector{D,M2,T2}) where {D,M1,M2,T1,T2}
     algorithm = binary_algorithm(Val(D), Val(M1), Val(M2))
     # return all(map(term -> eval_eq_term(term, x1, x2), algorithm))
     # We want left-to-right evaluation without shortcuts to enable
@@ -159,8 +157,7 @@ end
 function Base.map(f, x::Multivector{D,M}, ys::Multivector{D,M}...) where {D,M}
     return Multivector{D,M}(map(f, x.elts, map(y -> y.elts, ys)...))
 end
-function Base.reduce(f, x::Multivector{D,M},
-                     ys::Multivector{D,M}...) where {D,M}
+function Base.reduce(f, x::Multivector{D,M}, ys::Multivector{D,M}...) where {D,M}
     return reduce(f, x.elts, map(y -> y.elts, ys)...)
 end
 
@@ -182,15 +179,13 @@ end
 Base.zero(::Type{<:Multivector{D}}) where {D} = zero(Multivector{D,0})
 Base.zero(x::Multivector) = zero(typeof(x))
 
-function Defs.unit(::Type{<:Multivector{D,M,T}},
-                   inds::SVector{N,<:Integer}) where {D,M,T,N}
+function Defs.unit(::Type{<:Multivector{D,M,T}}, inds::SVector{N,<:Integer}) where {D,M,T,N}
     M::Unsigned
     n = lst2lin(Val(D), Val(M), inds)
     @assert n != 0
     return Multivector{D,M}((one(T),))
 end
-function Defs.unit(::Type{<:Multivector{D,M}},
-                   inds::SVector{N,<:Integer}) where {D,M,N}
+function Defs.unit(::Type{<:Multivector{D,M}}, inds::SVector{N,<:Integer}) where {D,M,N}
     return unit(Multivector{D,M,Float64}, inds)
 end
 Defs.unit(F::Type{<:Multivector}, inds::Tuple{}) = unit(F, SVector{0,Int}())
@@ -207,8 +202,7 @@ Base.:-(x::Multivector{D,M}) where {D,M} = Multivector{D,M}(-x.elts)
 end
 function Base.:+(x1::Multivector{D,M1}, x2::Multivector{D,M2}) where {D,M1,M2}
     M = M1 | M2
-    M == 0 &&
-        return Multivector{D,M,typeof(zero(eltype(x1)) + zero(eltype(x2)))}(())
+    M == 0 && return Multivector{D,M,typeof(zero(eltype(x1)) + zero(eltype(x2)))}(())
     algorithm = binary_algorithm(Val(D), Val(M1), Val(M2))
     return Multivector{D,M}(map(term -> eval_add_term(term, x1, x2), algorithm))
 end
@@ -219,8 +213,7 @@ end
 end
 function Base.:-(x1::Multivector{D,M1}, x2::Multivector{D,M2}) where {D,M1,M2}
     M = M1 | M2
-    M == 0 &&
-        return Multivector{D,M,typeof(zero(eltype(x1)) - zero(eltype(x2)))}(())
+    M == 0 && return Multivector{D,M,typeof(zero(eltype(x1)) - zero(eltype(x2)))}(())
     algorithm = binary_algorithm(Val(D), Val(M1), Val(M2))
     return Multivector{D,M}(map(term -> eval_sub_term(term, x1, x2), algorithm))
 end
@@ -242,8 +235,7 @@ all bit indices for dimension `D` with stored elements `M`
 """
 function dim_bitindices_slow(D::Int, M::Unsigned)
     bitindices = Vector{SVector{D,Bool}}()
-    for ibits in
-        CartesianIndex(ntuple(d -> 0, D)):CartesianIndex(ntuple(d -> 1, D))
+    for ibits in CartesianIndex(ntuple(d -> 0, D)):CartesianIndex(ntuple(d -> 1, D))
         bits = SVector{D,Bool}(Tuple(ibits))
         if getbit(M, bits2uint(bits))
             push!(bitindices, bits)
@@ -320,8 +312,7 @@ function lin2lst(::Val{D}, ::Val{M}, lin::Int) where {D,M}
     return bit2lst(Val(D), lin2bit(Val(D), Val(M), lin))
 end
 
-function lst2lin(::Val{D}, ::Val{M},
-                 list::AbstractVector{<:Integer}) where {D,M}
+function lst2lin(::Val{D}, ::Val{M}, list::AbstractVector{<:Integer}) where {D,M}
     return bit2lin(Val(D), Val(M), lst2bit(Val(D), list))
 end
 
@@ -382,10 +373,8 @@ end
     for n1 in 1:N1
         bits1 = lin2bit(Val(D), Val(M1), n1)
         bitsr = .~bits1
-        _, parity = sort_perm([
-                                  bit2lst(Val(D), bits1)
-                                  bit2lst(Val(D), bitsr)
-                              ])
+        _, parity = sort_perm([bit2lst(Val(D), bits1)
+                               bit2lst(Val(D), bitsr)])
         s = isodd(parity)
         ind = bit2lin(Val(D), Val(M), bitsr)
         elts[ind] = (s, n1)
@@ -427,10 +416,8 @@ end
         bits1 = lin2bit(Val(D), Val(M1), n1)
         bitsr = .~bits1
         # The "opposite" parity as `hodge`
-        _, parity = sort_perm([
-                                  bit2lst(Val(D), bitsr)
-                                  bit2lst(Val(D), bits1)
-                              ])
+        _, parity = sort_perm([bit2lst(Val(D), bitsr)
+                               bit2lst(Val(D), bits1)])
         s = isodd(parity)
         ind = bit2lin(Val(D), Val(M), bitsr)
         elts[ind] = (s, n1)
@@ -448,8 +435,7 @@ function Forms.invhodge(x1::Multivector{D,M1}) where {D,M1}
     M = invhodge_mask(Val(D), Val(M1))
     M == 0 && return zero(Multivector{D,M,eltype(x1)})
     algorithm = invhodge_algorithm(Val(D), Val(M1))::SVector
-    return Multivector{D,M}(map(term -> eval_invhodge_term(term, x1),
-                                algorithm))
+    return Multivector{D,M}(map(term -> eval_invhodge_term(term, x1), algorithm))
 end
 
 # conj
@@ -485,8 +471,7 @@ end
     end
     return M
 end
-@generated function wedge_algorithm(::Val{D}, ::Val{M1},
-                                    ::Val{M2}) where {D,M1,M2}
+@generated function wedge_algorithm(::Val{D}, ::Val{M1}, ::Val{M2}) where {D,M1,M2}
     D::Int
     M1::Unsigned
     M2::Unsigned
@@ -501,10 +486,8 @@ end
         if !any(bits1 .& bits2)
             bitsr = bits1 .| bits2
             @assert getbit(M, bits2uint(bitsr))
-            _, parity = sort_perm([
-                                      bit2lst(Val(D), bits1)
-                                      bit2lst(Val(D), bits2)
-                                  ])
+            _, parity = sort_perm([bit2lst(Val(D), bits1)
+                                   bit2lst(Val(D), bits2)])
             s = isodd(parity)
             ind = bit2lin(Val(D), Val(M), bitsr)
             push!(elts[ind], WedgeTerm(s, n1, n2))
@@ -524,20 +507,17 @@ end
     end
     return r
 end
-function Forms.wedge(x1::Multivector{D,M1},
-                     x2::Multivector{D,M2}) where {D,M1,M2}
+function Forms.wedge(x1::Multivector{D,M1}, x2::Multivector{D,M2}) where {D,M1,M2}
     @assert 0 <= D
     M1::Unsigned
     M2::Unsigned
     M = wedge_mask(Val(D), Val(M1), Val(M2))
-    M == 0 &&
-        return zero(Multivector{D,M,typeof(one(eltype(x1)) * one(eltype(x2)))})
+    M == 0 && return zero(Multivector{D,M,typeof(one(eltype(x1)) * one(eltype(x2)))})
     algorithm = wedge_algorithm(Val(D), Val(M1), Val(M2))::Tuple
     return Multivector{D,M}(map(elt -> eval_wedge_elt(elt, x1, x2), algorithm))
 end
 @inline Forms.wedge(x::Multivector) = x
-@inline function Forms.wedge(x1::Multivector, x2::Multivector,
-                             x3s::Multivector...)
+@inline function Forms.wedge(x1::Multivector, x2::Multivector, x3s::Multivector...)
     return wedge(wedge(x1, x2), x3s...)
 end
 @inline function Forms.wedge(xs::SVector{0,<:Multivector{D,M,T}}) where {D,M,T}
@@ -557,8 +537,7 @@ end
 @inline function vee′(x1::Multivector, x2::Multivector, x3s::Multivector...)
     return vee′(x1 ∧ ⋆x2, x3s...)
 end
-@inline function Forms.vee(x1::Multivector, x2::Multivector,
-                           x3s::Multivector...)
+@inline function Forms.vee(x1::Multivector, x2::Multivector, x3s::Multivector...)
     # vee(x1 ∨ x2, x3s...)
     return inv(⋆)(vee′(⋆x1, x2, x3s...))
 end
@@ -615,8 +594,7 @@ end
     end
     return M
 end
-@generated function mul_algorithm(::Val{D}, ::Val{M1},
-                                  ::Val{M2}) where {D,M1,M2}
+@generated function mul_algorithm(::Val{D}, ::Val{M1}, ::Val{M2}) where {D,M1,M2}
     D::Int
     M1::Unsigned
     M2::Unsigned
@@ -630,10 +608,8 @@ end
         bits2 = lin2bit(Val(D), Val(M2), n2)
         bitsr = (bits1 .| bits2) .& .~(bits1 .& bits2)
         @assert getbit(M, bits2uint(bitsr))
-        _, parity = sort_perm([
-                                  bit2lst(Val(D), bits1)
-                                  bit2lst(Val(D), bits2)
-                              ])
+        _, parity = sort_perm([bit2lst(Val(D), bits1)
+                               bit2lst(Val(D), bits2)])
         s = isodd(parity)
         ind = bit2lin(Val(D), Val(M), bitsr)
         push!(elts[ind], MulTerm(s, n1, n2))
@@ -657,8 +633,7 @@ function Base.:*(x1::Multivector{D,M1}, x2::Multivector{D,M2}) where {D,M1,M2}
     M1::Unsigned
     M2::Unsigned
     M = mul_mask(Val(D), Val(M1), Val(M2))
-    M == 0 &&
-        return zero(Multivector{D,M,typeof(one(eltype(x1)) * one(eltype(x2)))})
+    M == 0 && return zero(Multivector{D,M,typeof(one(eltype(x1)) * one(eltype(x2)))})
     algorithm = mul_algorithm(Val(D), Val(M1), Val(M2))::Tuple
     return Multivector{D,M}(map(elt -> eval_mul_elt(elt, x1, x2), algorithm))
 end

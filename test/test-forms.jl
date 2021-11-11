@@ -41,8 +41,7 @@ end
     y = MakeForm{D,R,T}(fun::Function)
 
     arr = Array{T}(undef, ntuple(r -> D, R))
-    for ind in
-        CartesianIndex(ntuple(r -> 1, R)):CartesianIndex(ntuple(r -> D, R))
+    for ind in CartesianIndex(ntuple(r -> 1, R)):CartesianIndex(ntuple(r -> D, R))
         lst = SVector{R,Int}(Tuple(ind))
         issorted = true
         for r in 1:(R - 1)
@@ -57,9 +56,7 @@ end
     subarr = R == 0 ? (@view arr[]) :
              R == 1 ? (@view arr[:]) :
              R == 2 ? (@view arr[:, :]) :
-             R == 3 ? (@view arr[:, :, :]) :
-             R == 4 ? (@view arr[:, :, :, :]) :
-             R == 5 ? (@view arr[:, :, :, :, :]) : nothing
+             R == 3 ? (@view arr[:, :, :]) : R == 4 ? (@view arr[:, :, :, :]) : R == 5 ? (@view arr[:, :, :, :, :]) : nothing
     subarr::SubArray
     @assert ndims(arr) == R
     @assert ndims(subarr) == R
@@ -338,8 +335,7 @@ end
     norm(x)::float(T)
     @test norm(x) ≈ sqrt(norm2(x))
     @test norm(a * x) ≈ norm(a) * norm(x)
-    @test norm(y + y2) <= norm(y) + norm(y2) ||
-          norm(y + y2) ≈ norm(y) + norm(y2)
+    @test norm(y + y2) <= norm(y) + norm(y2) || norm(y + y2) ≈ norm(y) + norm(y2)
 
     xs = rand(Form{D,R1,SVector{4,T}})
     xs2 = rand(Form{D,R1,SVector{4,T}})
@@ -349,8 +345,7 @@ end
     norm(xs)::float(T)
     @test norm(xs) ≈ sqrt(norm2(xs))
     @test norm(a * xs) ≈ norm(a) * norm(xs)
-    @test norm(xs + xs2) <= norm(xs) + norm(xs2) ||
-          norm(xs + xs2) ≈ norm(xs) + norm(xs2)
+    @test norm(xs + xs2) <= norm(xs) + norm(xs2) || norm(xs + xs2) ≈ norm(xs) + norm(xs2)
 
     # cross product: x × y = ⋆(x ∧ y)
     Rcross = D - (R1 + R2)
@@ -361,10 +356,7 @@ end
 end
 
 const Dmax4 = min(4, Dmax)
-@testset "Tensor sums of forms D1=$D1 D2=$D2 R=$R" for D1 in 0:Dmax4,
-D2 in 0:Dmax4,
-R in 1:min(D1, D2)
-
+@testset "Tensor sums of forms D1=$D1 D2=$D2 R=$R" for D1 in 0:Dmax4, D2 in 0:Dmax4, R in 1:min(D1, D2)
     D = D1 + D2
 
     T = Rational{Int64}
@@ -413,12 +405,7 @@ R in 1:min(D1, D2)
 end
 
 const Dmax3 = min(3, Dmax)
-@testset "Tensor products of forms D1=$D1 R1=$R1 D2=$D2 R2=$R2" for D1 in
-                                                                    0:Dmax3,
-D2 in 0:Dmax3,
-R1 in 0:D1,
-R2 in 0:D2
-
+@testset "Tensor products of forms D1=$D1 R1=$R1 D2=$D2 R2=$R2" for D1 in 0:Dmax3, D2 in 0:Dmax3, R1 in 0:D1, R2 in 0:D2
     D = D1 + D2
     R = R1 + R2
 
@@ -460,8 +447,7 @@ R2 in 0:D2
     @test (x + x2) ⊗ y === x ⊗ y + x2 ⊗ y
     @test x ⊗ (y + y2) === x ⊗ y + x ⊗ y2
 
-    @test reverse_basis(x ⊗ y) ===
-          bitsign(R1 * R2) * (reverse_basis(y) ⊗ reverse_basis(x))
+    @test reverse_basis(x ⊗ y) === bitsign(R1 * R2) * (reverse_basis(y) ⊗ reverse_basis(x))
 
     for D3 in 0:Dmax3, R3 in 0:D3
         z = rand(Form{D3,R3,T})

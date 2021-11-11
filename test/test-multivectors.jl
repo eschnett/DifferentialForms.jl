@@ -36,8 +36,7 @@ end
 
         @test Multivector{D,M,Float64}(x) == Multivector{D,M,Float64}(x.elts)
 
-        @test Multivector{D,M,Float64}(collect(x)) ==
-              Multivector{D,M,Float64}(x)
+        @test Multivector{D,M,Float64}(collect(x)) == Multivector{D,M,Float64}(x)
     end
 end
 
@@ -281,8 +280,7 @@ end
         norm(x)::float(T)
         @test norm(x) ≈ sqrt(norm2(x))
         @test norm(a * x) ≈ norm(a) * norm(x)
-        @test norm(x + y) <= norm(x) + norm(y) ||
-              norm(x + y) ≈ norm(x) + norm(y)
+        @test norm(x + y) <= norm(x) + norm(y) || norm(x + y) ≈ norm(x) + norm(y)
 
         # cross product: x × y = ⋆(x ∧ y)
         (x × y)::Multivector{D}
