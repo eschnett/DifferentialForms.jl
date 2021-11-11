@@ -465,10 +465,13 @@ Defs.unit(F::Type{<:Form}, inds::Integer...) = unit(F, inds)
 
 Base.:+(x::Form{D,R}) where {D,R} = Form{D,R}(+x.elts)
 Base.:-(x::Form{D,R}) where {D,R} = Form{D,R}(-x.elts)
+Base.conj(x::Form{D,R}) where {D,R} = Form{D,R}(conj(x.elts))
 Base.:+(x::Form{D,R}, y::Form{D,R}) where {D,R} = Form{D,R}(x.elts + y.elts)
 Base.:-(x::Form{D,R}, y::Form{D,R}) where {D,R} = Form{D,R}(x.elts - y.elts)
 Base.:*(x::Form{D,R}, a) where {D,R} = Form{D,R}(x.elts * a)
 Base.:/(x::Form{D,R}, a) where {D,R} = Form{D,R}(x.elts / a)
+Base.div(x::Form{D,R}, a) where {D,R} = Form{D,R}(map(b -> div(b, a), x.elts))
+Base.mod(x::Form{D,R}, a) where {D,R} = Form{D,R}(map(b -> mod(b, a), x.elts))
 Base.:*(a, x::Form{D,R}) where {D,R} = Form{D,R}(a * x.elts)
 Base.:\(a, x::Form{D,R}) where {D,R} = Form{D,R}(a \ x.elts)
 

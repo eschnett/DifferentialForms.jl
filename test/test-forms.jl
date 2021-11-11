@@ -137,6 +137,8 @@ end
     @test (-x) + x === n
     @test x - y === x + (-y)
 
+    @test conj(conj(x)) === x
+
     @test (a * b) * x === a * (b * x)
     @test x * (a * b) === (x * a) * b
 
