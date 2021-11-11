@@ -423,9 +423,8 @@ Base.setindex(x::Form, val, inds::Integer...) = Base.setindex(x, val, inds)
 function Base.map(f, x::Form{D,R}, ys::Form{D,R}...) where {D,R}
     return Form{D,R}(map(f, x.elts, map(y -> y.elts, ys)...))
 end
-function Base.reduce(f, x::Form{D,R}, ys::Form{D,R}...) where {D,R}
-    return reduce(f, x.elts, map(y -> y.elts, ys)...)
-end
+Base.reduce(op, x::Form) = reduce(op, x.elts)
+Base.mapreduce(f, op, x::Form{D,R}, ys::Form{D,R}...) where {D,R} = mapreduce(op, f, x.elts, map(y -> y.elts, ys)...)
 
 ################################################################################
 
