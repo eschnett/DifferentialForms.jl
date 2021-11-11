@@ -72,7 +72,7 @@ frank(x::Form) = frank(typeof(x))
 # I/O
 
 function Base.show(io::IO, x::Form{D,R,T}) where {D,R,T}
-    print(io, "$T⟦")
+    print(io, "$T{$D,$R}⟦")
     for n in 1:length(x)
         n > 1 && print(io, ", ")
         inds = lin2lst(Val(D), Val(R), n)
@@ -82,7 +82,7 @@ function Base.show(io::IO, x::Form{D,R,T}) where {D,R,T}
         end
         print(io, "]:", x[n])
     end
-    print(io, "⟧{$D,$R}")
+    print(io, "⟧")
     return nothing
 end
 
