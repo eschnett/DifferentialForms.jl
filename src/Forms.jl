@@ -398,7 +398,7 @@ Base.length(x::Form) = length(typeof(x))
 Base.size(::Type{<:Form{D,R}}) where {D,R} = ntuple(d -> D, R)
 Base.size(x::Form) = size(typeof(x))
 Base.size(::Type{<:Form{D}}, r) where {D} = D
-Base.size(x::Form, r) = size(typeof(x))
+Base.size(x::Form, r) = size(typeof(x), r)
 
 Base.getindex(x::Form, ind::Integer) = x.elts[ind]
 function Base.getindex(x::Form{D,R}, inds::SVector{R}) where {D,R}
