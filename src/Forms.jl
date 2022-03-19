@@ -559,6 +559,7 @@ export reverse_basis
 Hodge dual
 """
 hodge
+hodge(x::Number) = x
 @generated function hodge_algorithm(::Val{D}, ::Val{R1}) where {D,R1}
     @assert 0 <= R1 <= D
     R = D - R1
@@ -579,7 +580,7 @@ hodge
 end
 @inline @inbounds function eval_hodge_term(term::Tuple{Bool,Int}, x1)
     s, i = term
-    return bitsign(s) * x1[i]
+    return bitsign(s) * ⋆x1[i]
 end
 function hodge(x1::Form{D,R1}) where {D,R1}
     @assert 0 <= R1 <= D
@@ -598,6 +599,7 @@ const ⋆ = hodge
 Inverse of Hodge dual: `inv(⋆)⋆x = x`
 """
 invhodge
+invhodge(x::Number) = x
 @generated function invhodge_algorithm(::Val{D}, ::Val{R1}) where {D,R1}
     @assert 0 <= R1 <= D
     R = D - R1
@@ -619,7 +621,7 @@ invhodge
 end
 @inline function eval_invhodge_term(term::Tuple{Bool,Int}, x1)
     s, i = term
-    @inbounds bitsign(s) * x1[i]
+    @inbounds bitsign(s) * inv(⋆)(x1[i])
 end
 function invhodge(x1::Form{D,R1}) where {D,R1}
     @assert 0 <= R1 <= D
@@ -640,6 +642,7 @@ export invhodge
 Outer producxt
 """
 wedge
+wedge(x::Number, ys::Number...) = *(x, ys...)
 @generated function wedge_algorithm(::Val{D}, ::Val{R1}, ::Val{R2}) where {D,R1,R2}
     @assert 0 <= R1 <= D
     @assert 0 <= R2 <= D
@@ -669,10 +672,10 @@ end
     U = typeof(one(eltype(x1)) * one(eltype(x2)))
     M == 0 && return zero(U)
     s, i, j = term[1]
-    r = bitsign(s) * x1[i] * x2[j]
+    r = bitsign(s) * (x1[i] ∧ x2[j])
     for m in 2:M
         s, i, j = term[m]
-        r += bitsign(s) * x1[i] * x2[j]
+        r += bitsign(s) * (x1[i] ∧ x2[j])
     end
     return r
 end
@@ -700,6 +703,7 @@ Regressive product: `⋆(x ∨ y) = ⋆x ∧ ⋆y`
 (Inspired by Grassmann.jl)
 """
 vee
+vee(x::Number, ys::Number...) = *(x, ys...)
 @inline vee(x1::Form, x2::Form) = inv(⋆)(⋆x1 ∧ ⋆x2)
 @inline vee(x::Form) = x
 @inline vee(x1::Form, x2::Form, x3s::Form...) = vee(vee(x1, x2), x3s...)
