@@ -94,18 +94,18 @@ end
 
     N = length(x)
     for n in 1:N
-        y = Base.setindex(x, x[n], n)
+        y = setindex(x, x[n], n)
         @test y === x
 
         inds = Forms.lin2lst(Val(D), Val(R), n)::SVector{R,Int}
-        y = Base.setindex(x, x[inds], inds)
+        y = setindex(x, x[inds], inds)
         @test y === x
 
         tup = Tuple(inds)::NTuple{R,Int}
-        y = Base.setindex(x, x[tup], tup)
+        y = setindex(x, x[tup], tup)
         @test y === x
 
-        y = Base.setindex(x, x[inds...], inds...)
+        y = setindex(x, x[inds...], inds...)
         @test y === x
     end
 end

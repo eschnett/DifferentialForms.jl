@@ -2,6 +2,7 @@ module Multivectors
 
 using ComputedFieldTypes
 using LinearAlgebra
+using Random
 using StaticArrays
 
 using ..Defs
@@ -165,9 +166,9 @@ end
 
 # Multivectors form a vector space
 
-function Base.rand(::Type{<:Multivector{D,M,T}}) where {D,M,T}
+function Base.rand(rng::AbstractRNG, ::Random.SamplerType{<:Multivector{D,M,T}}) where {D,M,T}
     N = length(Multivector{D,M})
-    return Multivector{D,M}(rand(SVector{N,T}))
+    return Multivector{D,M}(rand(rng, SVector{N,T}))
 end
 function Base.zero(::Type{<:Multivector{D,M,T}}) where {D,M,T}
     N = length(Multivector{D,M})

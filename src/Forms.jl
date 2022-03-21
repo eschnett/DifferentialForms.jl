@@ -2,6 +2,7 @@ module Forms
 
 using ComputedFieldTypes
 using LinearAlgebra
+using Random
 using StaticArrays
 
 using ..Defs
@@ -19,12 +20,12 @@ export Form
     elts::SVector{binomial(Val(D), Val(R)),T}
 end
 
+# Constructor with added computed type (which must match)
+Form{D,R,T,X}(args...) where {D,R,T,X} = Form{D,R,T}(args...)::Form{D,R,T,X}
+
 # Constructor without explicit type
 Form{D,R}(x::Form{D,R}) where {D,R} = x
 Form{D,R}(elts::SVector{N,T}) where {D,R,N,T} = Form{D,R,T}(elts)
-
-# Constructor with added computed type (which must match)
-Form{D,R,T,X}(args...) where {D,R,T,X} = Form{D,R,T}(args...)::Form{D,R,T,X}
 
 const IteratorTypes = Union{Base.Generator,Iterators.Flatten}
 function Form{D,R,T}(gen::IteratorTypes) where {D,R,T}
@@ -51,9 +52,8 @@ function Form{D,R}(tup::Tuple{}) where {D,R}
 end
 
 # Conversions
-function Form{D,R,T}(f::Form{D,R}) where {D,R,T}
-    return Form{D,R,T}(SVector{length(Form{D,R}),T}(f.elts))
-end
+Form{D,R,T}(f::Form{D,R}) where {D,R,T} = Form{D,R,T}(SVector{length(Form{D,R}),T}(f.elts))
+Base.convert(::Type{<:Form{D,R,T}}, f::Form{D,R}) where {D,R,T} = Form{D,R,T}(SVector{length(Form{D,R}),T}(f.elts))
 
 Base.convert(::Type{T}, x::Form{D,0,T}) where {D,T} = x.elts[1]
 Base.convert(::Type{SVector}, x::Form{D,1,T}) where {D,T} = x.elts
@@ -430,9 +430,9 @@ Base.mapreduce(f, op, x::Form{D,R}, ys::Form{D,R}...) where {D,R} = mapreduce(op
 
 # Forms form a vector space
 
-function Base.rand(::Type{<:Form{D,R,T}}) where {D,R,T}
+function Base.rand(rng::AbstractRNG, ::Random.SamplerType{<:Form{D,R,T}}) where {D,R,T}
     N = binomial(Val(D), Val(R))
-    return Form{D,R}(rand(SVector{N,T}))
+    return Form{D,R}(rand(rng, SVector{N,T}))
 end
 function Base.zero(::Type{<:Form{D,R,T}}) where {D,R,T}
     N = binomial(Val(D), Val(R))
@@ -632,8 +632,6 @@ function invhodge(x1::Form{D,R1}) where {D,R1}
 end
 export invhodge
 @inline Base.inv(::typeof(hodge)) = invhodge
-
-@inline Base.conj(x::Form{D,R}) where {D,R} = Form{D,R}(conj.(x.elts))
 
 """
     wedge(x, y)
