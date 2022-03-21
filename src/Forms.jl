@@ -494,7 +494,8 @@ Base.:\(a, x::Form{D,R}) where {D,R} = Form{D,R}(a \ x.elts)
 Reverse
 """
 reverse
-@inline Base.reverse(x::Form{D,R}) where {D,R} = bitsign((R - 1) * R ÷ 2) * x
+Base.reverse(x::Number) = x
+@inline Base.reverse(x::Form{D,R}) where {D,R} = bitsign((R - 1) * R ÷ 2) * Form{D,R}(reverse.(x.elts))
 @inline Base.:~(x::Form) = reverse(x)
 @inline Base.inv(::typeof(~)) = ~
 
@@ -667,7 +668,7 @@ wedge(x::Number, ys::Number...) = *(x, ys...)
     return SVector{N,NTuple{M,Tuple{Bool,Int,Int}}}(elts)
 end
 @inline @inbounds function eval_wedge_term(term::NTuple{M,Tuple{Bool,Int,Int}}, x1, x2) where {M}
-    U = typeof(one(eltype(x1)) * one(eltype(x2)))
+    U = typeof(one(eltype(x1)) ∧ one(eltype(x2)))
     M == 0 && return zero(U)
     s, i, j = term[1]
     r = bitsign(s) * (x1[i] ∧ x2[j])
