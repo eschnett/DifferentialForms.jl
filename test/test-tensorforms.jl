@@ -496,6 +496,9 @@ end
     # @test reverse_basis(reverse_basis(x)) === x
     # @test reverse_basis(cycle_basis(reverse_basis(cycle_basis(x)))) === x
 
+    @test swap(x) isa TensorForm{D,R2x,R1x,T}
+    @test swap(swap(x)) === x
+
     @test ~~x === x
     @test a * ~x === ~(a * x)
 
