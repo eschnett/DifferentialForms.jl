@@ -159,6 +159,7 @@ function Base.zero(::Type{<:TensorForm{D,R1,R2,T}}) where {D,R1,R2,T}
 end
 Base.zero(::TensorForm{D,R1,R2,T}) where {D,R1,R2,T} = zero(TensorForm{D,R1,R2,T})
 Base.iszero(x::TensorForm) = iszero(x.form)
+Base.isreal(x::TensorForm) = isreal(x.form)
 
 function Defs.unit(::Type{<:TensorForm{D,R1,R2,T}}, ind::Integer) where {D,R1,R2,T}
     length1 = length(Form{D,R1})
