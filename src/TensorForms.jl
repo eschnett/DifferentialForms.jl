@@ -89,7 +89,7 @@ end
 Base.eltype(::Type{<:TensorForm{D,R1,R2,T}}) where {D,R1,R2,T} = T
 Base.firstindex(::Type{<:TensorForm}) = 1
 Base.firstindex(x::TensorForm) = firstindex(typeof(x))
-Base.iterate(x::TensorForm, state...) = Iterators.flatten(x.form, state...)
+Base.iterate(x::TensorForm, state...) = iterate(Iterators.flatten(x.form), state...)
 Base.ndims(::Type{<:TensorForm{D,R1,R2}}) where {D,R1,R2} = R1 + R2
 Base.ndims(x::TensorForm) = ndims(typeof(x))
 Base.lastindex(::Type{<:TensorForm{D,R1,R2}}) where {D,R1,R2} = length(TensorForm{D,R1,R2})

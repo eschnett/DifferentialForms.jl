@@ -37,6 +37,15 @@ end
     x = rand(TensorForm{D,R1,R2,T})
 
     N = length(x)
+
+    y = collect(x)
+    @test all(y[n] == x[n] for n in 1:N)
+    z = [a for a in x]
+    @test z == y
+    for (i,a) in enumerate(x)
+        @test a == x[i]
+    end
+
     N1 = length(x.form)
     N2 = N ÷ N1
     for n in 1:N
