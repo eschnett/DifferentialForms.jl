@@ -213,7 +213,7 @@ export swap
 function swap(x::TensorForm{D,R1,R2,T}) where {D,R1,R2,T}
     N1 = length(Form{D,R1})
     N2 = length(Form{D,R2})
-    return TensorForm(Form{D,R2,fulltype(Form{D,R2,T})}(SVector{N2,fulltype(Form{D,R2,T})}(Form{D,R1,T}(SVector{N1,T}(x.form[n1][n2]
+    return TensorForm(Form{D,R2,fulltype(Form{D,R2,T})}(SVector{N2,fulltype(Form{D,R1,T})}(Form{D,R1,T}(SVector{N1,T}(x.form[n1][n2]
                                                                                                                       for n1 in
                                                                                                                           1:N1))
                                                                                            for n2 in 1:N2)))::TensorForm{D,R2,R1,T}
