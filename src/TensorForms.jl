@@ -159,6 +159,7 @@ function Base.zero(::Type{<:TensorForm{D,R1,R2,T}}) where {D,R1,R2,T}
 end
 Base.zero(::TensorForm{D,R1,R2,T}) where {D,R1,R2,T} = zero(TensorForm{D,R1,R2,T})
 Base.iszero(x::TensorForm) = iszero(x.form)
+Base.isreal(x::TensorForm) = isreal(x.form)
 
 function Defs.unit(::Type{<:TensorForm{D,R1,R2,T}}, ind::Integer) where {D,R1,R2,T}
     length1 = length(Form{D,R1})
@@ -209,6 +210,15 @@ Base.one(::Type{<:TensorForm{D}}) where {D} = one(TensorForm{D,0,0})
 Base.one(x::TensorForm) = one(typeof(x))
 Base.isone(x::TensorForm{D,0,0}) where {D} = isone(x.form)
 
+export swap
+function swap(x::TensorForm{D,R1,R2,T}) where {D,R1,R2,T}
+    N1 = length(Form{D,R1})
+    N2 = length(Form{D,R2})
+    return TensorForm(Form{D,R2,fulltype(Form{D,R1,T})}(SVector{N2,fulltype(Form{D,R1,T})}(Form{D,R1,T}(SVector{N1,T}(x.form[n1][n2]
+                                                                                                                      for n1 in
+                                                                                                                          1:N1))
+                                                                                           for n2 in 1:N2)))::TensorForm{D,R2,R1,T}
+end
 Forms.reverse(x::TensorForm) = TensorForm(~x.form)
 Forms.:~(x::TensorForm) = reverse(x)
 

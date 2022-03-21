@@ -441,6 +441,7 @@ end
 Base.zero(::Type{<:Form{D,R}}) where {D,R} = zero(Form{D,R,Float64})
 Base.zero(x::Form) = zero(typeof(x))
 Base.iszero(x::Form) = all(iszero, x.elts)
+Base.isreal(x::Form) = all(isreal, x.elts)
 
 # Deprecated
 @inline Base.zeros(::Type{<:Form{D,R,T}}) where {D,R,T} = zero(Form{D,R,T})
