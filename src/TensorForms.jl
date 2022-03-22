@@ -51,6 +51,7 @@ function Base.show(io::IO, x::TensorForm{D,R1,R2,T}) where {D,R1,R2,T}
         inds1 = Forms.lin2lst(Val(D), Val(R1), n1)
         for n2 in 1:length(x.form[inds1])
             inds2 = Forms.lin2lst(Val(D), Val(R2), n2)
+            n1 == n2 == 1 || print(io, ", ")
             print(io, "[")
             for ind1 in inds1
                 print(io, ind1)
@@ -60,7 +61,35 @@ function Base.show(io::IO, x::TensorForm{D,R1,R2,T}) where {D,R1,R2,T}
                 print(io, ind2)
             end
             print(io, "]:", x.form[n1][n2])
-            print(io, ", ")
+        end
+    end
+    print(io, "⟧")
+    return nothing
+end
+
+function Base.show(io::IO, mime::MIME"text/plain", x::TensorForm{D,R1,R2,T}) where {D,R1,R2,T}
+    skiptype = get(io, :typeinfo, Any) <: TensorForm{D,R1,R2,T}
+    if !skiptype
+        print(io, "$T{$D,$R1,$R2}")
+    end
+    print(io, "⟦")
+    for n1 in 1:length(x.form)
+        inds1 = Forms.lin2lst(Val(D), Val(R1), n1)
+        for n2 in 1:length(x.form[inds1])
+            inds2 = Forms.lin2lst(Val(D), Val(R2), n2)
+            n1 == n2 == 1 || print(io, ", ")
+            if !get(io, :compact, false)
+                print(io, "[")
+                for ind1 in inds1
+                    print(io, ind1)
+                end
+                print(io, ",")
+                for ind2 in inds2
+                    print(io, ind2)
+                end
+                print(io, "]:")
+            end
+            show(IOContext(io, :compact => true, :typeinfo => T), mime, x.form[n1][n2])
         end
     end
     print(io, "⟧")
