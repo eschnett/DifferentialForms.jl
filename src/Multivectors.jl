@@ -158,8 +158,11 @@ end
 function Base.map(f, x::Multivector{D,M}, ys::Multivector{D,M}...) where {D,M}
     return Multivector{D,M}(map(f, x.elts, map(y -> y.elts, ys)...))
 end
-function Base.reduce(f, x::Multivector{D,M}, ys::Multivector{D,M}...) where {D,M}
-    return reduce(f, x.elts, map(y -> y.elts, ys)...)
+function Base.reduce(f, x::Multivector{D,M}, ys::Multivector{D,M}...; kws...) where {D,M}
+    return reduce(f, x.elts, map(y -> y.elts, ys)...; kws...)
+end
+function Base.mapreduce(f, op, x::Multivector{D,M}, ys::Multivector{D,M}...; kws...) where {D,M}
+    return mapreduce(f, op, x.elts, map(y -> y.elts, ys)...; kws...)
 end
 
 ################################################################################

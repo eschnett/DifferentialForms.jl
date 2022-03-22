@@ -420,11 +420,11 @@ end
 Base.setindex(x::Form, val, inds::Tuple) = Base.setindex(x, val, SVector(inds))
 Base.setindex(x::Form, val, inds::Integer...) = Base.setindex(x, val, inds)
 
-function Base.map(f, x::Form{D,R}, ys::Form{D,R}...) where {D,R}
-    return Form{D,R}(map(f, x.elts, map(y -> y.elts, ys)...))
+Base.map(f, x::Form{D,R}, ys::Form{D,R}...) where {D,R} = Form{D,R}(map(f, x.elts, map(y -> y.elts, ys)...))
+Base.reduce(op, x::Form{D,R}, ys::Form{D,R}...; kws...) where {D,R} = reduce(op, x.elts, (y.elts for y in ys)...; kws...)
+function Base.mapreduce(f, op, x::Form{D,R}, ys::Form{D,R}...; kws...) where {D,R}
+    return mapreduce(f, op, x.elts, map(y -> y.elts, ys)...; kws...)
 end
-Base.reduce(op, x::Form) = reduce(op, x.elts)
-Base.mapreduce(f, op, x::Form{D,R}, ys::Form{D,R}...) where {D,R} = mapreduce(op, f, x.elts, map(y -> y.elts, ys)...)
 
 ################################################################################
 

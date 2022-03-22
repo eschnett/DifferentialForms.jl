@@ -140,12 +140,14 @@ Base.setindex(x::TensorForm, val, inds::Tuple) = setindex(x, val, SVector(inds))
 Base.setindex(x::TensorForm, val, inds::Integer...) = setindex(x, val, inds)
 
 function Base.map(f, x::TensorForm{D,R1,R2}, ys::TensorForm{D,R1,R2}...) where {D,R1,R2}
-    return TensorForm(map(f, x.form, (y.form for y in ys)...))::TensorForm{D,R1,R2}
+    return TensorForm(map((zs...) -> map(f, zs...), x.form, (y.form for y in ys)...))::TensorForm{D,R1,R2}
 end
-function Base.mapreduce(f, op, x::TensorForm{D,R1,R2}, ys::TensorForm{D,R1,R2}...) where {D,R1,R2}
-    return mapreduce((ys...) -> mapreduce(f, op, ys...), op, x.form)
+function Base.mapreduce(f, op, x::TensorForm{D,R1,R2}, ys::TensorForm{D,R1,R2}...; kws...) where {D,R1,R2}
+    return mapreduce((zs...) -> mapreduce(f, op, zs...; kws...), op, x.form, (y.form for y in ys)...)
 end
-Base.reduce(op, x::TensorForm) = mapreduce(y -> reduce(op, y), op, x.form)
+function Base.reduce(op, x::TensorForm{D,R1,R2}, ys::TensorForm{D,R1,R2}...; kws...) where {D,R1,R2}
+    return mapreduce((zs...) -> reduce(op, zs...; kws...), op, x.form, (y.form for y in ys)...; kws...)
+end
 
 ################################################################################
 

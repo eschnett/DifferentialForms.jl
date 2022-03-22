@@ -93,6 +93,24 @@ end
     x = rand(Form{D,R,T})
 
     N = length(x)
+
+    y = collect(x)
+    @test all(y[n] == x[n] for n in 1:N)
+    z = [a for a in x]
+    @test z == y
+    for (i, a) in enumerate(x)
+        @test a == x[i]
+    end
+    w = map(x -> Complex{Int}(x), x)
+    @test w == x
+
+    @test sum(x) == sum(y)
+    @test sum(x; init=0 + 0im) == sum(y; init=0 + 0im)
+    @test reduce(+, x) == reduce(+, y)
+    @test reduce(+, x; init=0 + 0im) == reduce(+, y; init=0 + 0im)
+    @test mapreduce(a -> 2a + 1, +, x) == mapreduce(a -> 2a + 1, +, y)
+    @test mapreduce(a -> 2a + 1, +, x; init=0 + 0im) == mapreduce(a -> 2a + 1, +, y; init=0 + 0im)
+
     for n in 1:N
         y = setindex(x, x[n], n)
         @test y === x
