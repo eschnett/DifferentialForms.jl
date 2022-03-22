@@ -105,7 +105,9 @@ end
     @test w == x
 
     @test sum(x) == sum(y)
-    @test sum(x; init=0 + 0im) == sum(y; init=0 + 0im)
+    if VERSION ≥ v"1.6"
+        @test sum(x; init=0 + 0im) == sum(y; init=0 + 0im)
+    end
     @test reduce(+, x) == reduce(+, y)
     @test reduce(+, x; init=0 + 0im) == reduce(+, y; init=0 + 0im)
     @test mapreduce(a -> 2a + 1, +, x) == mapreduce(a -> 2a + 1, +, y)
