@@ -20,7 +20,7 @@ export TensorForm
 end
 
 # Constructor with added computed type (which must match)
-TensorForm{D,R1,R2,T,X}(args...) where {D,R1,R2,T,X} = TensorForm{D,R1,R2,T}(args...)::Form{D,R1,R2,T,X}
+TensorForm{D,R1,R2,T,X}(args...) where {D,R1,R2,T,X} = TensorForm{D,R1,R2,T}(args...)::TensorForm{D,R1,R2,T,X}
 
 # Constructor without explicit type
 TensorForm{D,R1,R2}(x::TensorForm{D,R1,R2}) where {D,R1,R2} = x
