@@ -102,9 +102,9 @@ function Base.show(io::IO, mime::MIME"text/latex", x::TensorForm{D,R1,R2}) where
         inds1 = Forms.lin2lst(Val(D), Val(R1), n1)
         for n2 in 1:length(x.form[inds1])
             inds2 = Forms.lin2lst(Val(D), Val(R2), n2)
-            needsep && print(io, " + ")
-            needsep = true
             if !iszero(x.form[n1][n2])
+                needsep && print(io, " + ")
+                needsep = true
                 show(io, mime, x.form[n1][n2])
                 if !isempty(inds1)
                     print(io, "\\;")

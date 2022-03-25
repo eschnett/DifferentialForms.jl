@@ -120,7 +120,7 @@ function Base.show(io::IO, mime::MIME"text/latex", x::Form{D,R}) where {D,R}
                 print(io, "\\;")
             end
             needsep1 = false
-            for  ind in inds
+            for ind in inds
                 needsep1 && print(io, " \\wedge ")
                 needsep1 = true
                 print(io, "d", "xyzuvw"[ind:ind])
