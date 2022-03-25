@@ -108,6 +108,26 @@ function Base.show(io::IO, mime::MIME"text/plain", x::Form{D,R,T}) where {D,R,T}
     return nothing
 end
 
+function Base.show(io::IO, mime::MIME"text/latex", x::Form{D,R}) where {D,R}
+    needsep = false
+    for n in 1:length(x)
+        inds = lin2lst(Val(D), Val(R), n)
+        if !iszero(x[n])
+            needsep && print(io, " + ")
+            needsep = true
+            show(io, mime, x[n])
+            if !isempty(inds)
+                print(io, "\\;")
+            end
+            for (i, ind) in enumerate(inds)
+                i ≠ 0 && print(io, " \\wedge ")
+                print(io, "d", "xyzuvw"[ind:ind])
+            end
+        end
+    end
+    return nothing
+end
+
 ################################################################################
 
 # Comparisons

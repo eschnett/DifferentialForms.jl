@@ -96,6 +96,36 @@ function Base.show(io::IO, mime::MIME"text/plain", x::TensorForm{D,R1,R2,T}) whe
     return nothing
 end
 
+function Base.show(io::IO, mime::MIME"text/latex", x::TensorForm{D,R1,R2}) where {D,R1,R2}
+    needsep = false
+    for n1 in 1:length(x.form)
+        inds1 = Forms.lin2lst(Val(D), Val(R1), n1)
+        for n2 in 1:length(x.form[inds1])
+            inds2 = Forms.lin2lst(Val(D), Val(R2), n2)
+            needsep && print(io, " + ")
+            needsep = true
+            if !iszero(x.form[n1][n2])
+                show(io, mime, x.form[n1][n2])
+                if !isempty(inds1)
+                    print(io, "\\;")
+                end
+                for (i, ind1) in enumerate(inds1)
+                    i ≠ 0 && print(io, " \\wedge ")
+                    print(io, "d", "xyzuvw"[ind1:ind1], "_1")
+                end
+                if !isempty(inds2)
+                    print(io, "\\;")
+                end
+                for (i, ind2) in enumerate(inds2)
+                    i ≠ 0 && print(io, " \\wedge ")
+                    print(io, "d", "xyzuvw"[ind2:ind2], "_2")
+                end
+            end
+        end
+    end
+    return nothing
+end
+
 ################################################################################
 
 # Comparisons
