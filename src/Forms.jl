@@ -119,8 +119,10 @@ function Base.show(io::IO, mime::MIME"text/latex", x::Form{D,R}) where {D,R}
             if !isempty(inds)
                 print(io, "\\;")
             end
-            for (i, ind) in enumerate(inds)
-                i ≠ 0 && print(io, " \\wedge ")
+            needsep1 = false
+            for  ind in inds
+                needsep1 && print(io, " \\wedge ")
+                needsep1 = true
                 print(io, "d", "xyzuvw"[ind:ind])
             end
         end

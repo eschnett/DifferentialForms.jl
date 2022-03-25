@@ -109,15 +109,19 @@ function Base.show(io::IO, mime::MIME"text/latex", x::TensorForm{D,R1,R2}) where
                 if !isempty(inds1)
                     print(io, "\\;")
                 end
-                for (i, ind1) in enumerate(inds1)
-                    i ≠ 0 && print(io, " \\wedge ")
+                needsep1 = false
+                for ind1 in inds1
+                    needsep1 && print(io, " \\wedge ")
+                    needsep1 = true
                     print(io, "d", "xyzuvw"[ind1:ind1], "_1")
                 end
                 if !isempty(inds2)
                     print(io, "\\;")
                 end
-                for (i, ind2) in enumerate(inds2)
-                    i ≠ 0 && print(io, " \\wedge ")
+                needsep2 = false
+                for ind2 in inds2
+                    needsep2 && print(io, " \\wedge ")
+                    needsep2 = true
                     print(io, "d", "xyzuvw"[ind2:ind2], "_2")
                 end
             end
