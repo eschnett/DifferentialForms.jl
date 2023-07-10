@@ -44,7 +44,7 @@ end
     end
 end
 
-@testset "Tensor forms as collections" begin
+@testset "Double forms as collections" begin
     for iter in 1:100
         D1 = rand(0:4)
         D2 = rand(0:4)
@@ -74,6 +74,9 @@ end
         @test reduce(+, x; init=0 + 0im) === reduce(+, y; init=0 + 0im)
         @test mapreduce(a -> 2a + 1, +, x) === mapreduce(a -> 2a + 1, +, y)
         @test mapreduce(a -> 2a + 1, +, x; init=0 + 0im) === mapreduce(a -> 2a + 1, +, y; init=0 + 0im)
+
+        @test apply2(⋆, apply1(⋆, x)) = ⋆x
+        @test apply1(⋆, apply2(⋆, x)) = apply2(⋆, apply1(⋆, x))
 
         N1 = length(x.form)
         N2 = N ÷ N1
@@ -168,7 +171,7 @@ end
     end
 end
 
-@testset "Tensor form algebra" begin
+@testset "Double form algebra" begin
     # Using === instead of == for comparisons to catch wrong types
 
     for iter in 1:100

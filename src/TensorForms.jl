@@ -212,6 +212,15 @@ function Base.reduce(op, x::TensorForm{D,R1,R2}, ys::TensorForm{D,R1,R2}...; kws
     return mapreduce((zs...) -> reduce(op, zs...; kws...), op, x.form, (y.form for y in ys)...; kws...)
 end
 
+export apply1
+function apply1(f, x::TensorForm{D,R1,R2}, ys::TensorForm{D,R1,R2}...) where {D,R1,R2}
+    return TensorForm(f(x.form, (y.form for y in ys)...))::TensorForm{D,R1,R2}
+end
+export apply2
+function apply2(f, x::TensorForm{D,R1,R2}, ys::TensorForm{D,R1,R2}...) where {D,R1,R2}
+    return TensorForm(map(f, x.form, (y.form for y in ys)...))::TensorForm{D,R1,R2}
+end
+
 ################################################################################
 
 # TensorForms form a vector space
