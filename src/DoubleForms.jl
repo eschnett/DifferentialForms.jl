@@ -215,11 +215,11 @@ function Base.reduce(op, x::DoubleForm{D1,D2,R1,R2}, ys::DoubleForm{D1,D2,R1,R2}
     return mapreduce((zs...) -> reduce(op, zs...; kws...), op, x.form, (y.form for y in ys)...; kws...)
 end
 
-function TensorForms.apply1(f, x::DoubleForm{D1,D2,R1,R2}, ys::DoubleForm{D1,D2,R1,R2}...) where {D1,D2,R1,R2}
-    return DoubleForm(f(x.form, (y.form for y in ys)...))::DoubleForm{D1,D2,R1,R2}
+function TensorForms.apply1(f, x::DoubleForm{D1,D2}, ys::DoubleForm{D1,D2}...) where {D1,D2}
+    return DoubleForm(f(x.form, (y.form for y in ys)...))::DoubleForm{D1,D2}
 end
-function TensorForms.apply2(f, x::DoubleForm{D1,D2,R1,R2}, ys::DoubleForm{D1,D2,R1,R2}...) where {D1,D2,R1,R2}
-    return DoubleForm(map(f, x.form, (y.form for y in ys)...))::DoubleForm{D1,D2,R1,R2}
+function TensorForms.apply2(f, x::DoubleForm{D1,D2,R1}, ys::DoubleForm{D1,D2,R1}...) where {D1,D2,R1}
+    return DoubleForm(map(f, x.form, (y.form for y in ys)...))::DoubleForm{D1,D2,R1}
 end
 
 ################################################################################

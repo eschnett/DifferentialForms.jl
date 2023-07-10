@@ -213,12 +213,12 @@ function Base.reduce(op, x::TensorForm{D,R1,R2}, ys::TensorForm{D,R1,R2}...; kws
 end
 
 export apply1
-function apply1(f, x::TensorForm{D,R1,R2}, ys::TensorForm{D,R1,R2}...) where {D,R1,R2}
-    return TensorForm(f(x.form, (y.form for y in ys)...))::TensorForm{D,R1,R2}
+function apply1(f, x::TensorForm{D}, ys::TensorForm{D}...) where {D}
+    return TensorForm(f(x.form, (y.form for y in ys)...))::TensorForm{D}
 end
 export apply2
-function apply2(f, x::TensorForm{D,R1,R2}, ys::TensorForm{D,R1,R2}...) where {D,R1,R2}
-    return TensorForm(map(f, x.form, (y.form for y in ys)...))::TensorForm{D,R1,R2}
+function apply2(f, x::TensorForm{D,R1}, ys::TensorForm{D,R1}...) where {D,R1}
+    return TensorForm(map(f, x.form, (y.form for y in ys)...))::TensorForm{D,R1}
 end
 
 ################################################################################
