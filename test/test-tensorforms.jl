@@ -57,8 +57,11 @@ end
     @test mapreduce(a -> 2a + 1, +, x) === mapreduce(a -> 2a + 1, +, y)
     @test mapreduce(a -> 2a + 1, +, x; init=0 + 0im) === mapreduce(a -> 2a + 1, +, y; init=0 + 0im)
 
-    @test apply2(⋆, apply1(⋆, x)) == ⋆x
-    @test apply1(⋆, apply2(⋆, x)) == apply2(⋆, apply1(⋆, x))
+    scalar(x) = Scalar(x)
+    unscalar(x::Scalar) = x[]
+    star1(x) = map(unscalar, ⋆map(scalar, x))
+    @test apply2(star1, apply1(star1, x)) == ⋆x
+    @test apply1(star1, apply2(star1, x)) == apply2(star1, apply1(star1, x))
 
     N1 = length(x.form)
     N2 = N ÷ N1
