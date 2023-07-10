@@ -517,7 +517,7 @@ Base.:\(a, x::Form{D,R}) where {D,R} = Form{D,R}(a \ x.elts)
 Reverse
 """
 reverse
-Base.reverse(x::Number) = x
+Base.reverse(x::Union{Number,Scalar}) = x
 @inline Base.reverse(x::Form{D,R}) where {D,R} = bitsign((R - 1) * R ÷ 2) * Form{D,R}(reverse.(x.elts))
 @inline Base.:~(x::Form) = reverse(x)
 @inline Base.inv(::typeof(~)) = ~
@@ -583,7 +583,7 @@ export reverse_basis
 Hodge dual
 """
 hodge
-hodge(x::Number) = x
+hodge(x::Union{Number,Scalar}) = x
 @generated function hodge_algorithm(::Val{D}, ::Val{R1}) where {D,R1}
     @assert 0 <= R1 <= D
     R = D - R1
@@ -623,7 +623,7 @@ const ⋆ = hodge
 Inverse of Hodge dual: `inv(⋆)⋆x = x`
 """
 invhodge
-invhodge(x::Number) = x
+invhodge(x::Union{Number,Scalar}) = x
 @generated function invhodge_algorithm(::Val{D}, ::Val{R1}) where {D,R1}
     @assert 0 <= R1 <= D
     R = D - R1
@@ -664,7 +664,7 @@ export invhodge
 Outer producxt
 """
 wedge
-wedge(x::Number, ys::Number...) = *(x, ys...)
+wedge(x::Union{Number,Scalar}, ys::Union{Number,Scalar}...) = *(x, ys...)
 @generated function wedge_algorithm(::Val{D}, ::Val{R1}, ::Val{R2}) where {D,R1,R2}
     @assert 0 <= R1 <= D
     @assert 0 <= R2 <= D
@@ -725,7 +725,7 @@ Regressive product: `⋆(x ∨ y) = ⋆x ∧ ⋆y`
 (Inspired by Grassmann.jl)
 """
 vee
-vee(x::Number, ys::Number...) = *(x, ys...)
+vee(x::Union{Number,Scalar}, ys::Union{Number,Scalar}...) = *(x, ys...)
 @inline vee(x1::Form, x2::Form) = inv(⋆)(⋆x1 ∧ ⋆x2)
 @inline vee(x::Form) = x
 @inline vee(x1::Form, x2::Form, x3s::Form...) = vee(vee(x1, x2), x3s...)
@@ -748,7 +748,7 @@ export dot, ⋅
 # Base.abs2(x::Form) = (x ⋅ x)[]
 # Base.abs(x::Form) = sqrt(abs2(x))
 @inline norm2(x::Missing) = missing
-@inline norm2(x::Number) = abs2(x)
+@inline norm2(x::Union{Number,Scalar}) = abs2(x)
 @inline norm2(x::AbstractArray) = sum(norm2.(x))
 # @inline norm2(x::Form) = (x ⋅ x)[]
 @inline norm2(x::Form) = norm2(x.elts)
