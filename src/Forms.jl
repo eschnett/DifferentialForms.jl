@@ -854,7 +854,7 @@ end
     U = typeof(one(eltype(x1)) * one(eltype(x2)))
     return zero(U)
 end
-@inline function eval_tensorproduct_term(term::Tuple{Int,Int}, x1, x2) where {I}
+@inline function eval_tensorproduct_term(term::Tuple{Int,Int}, x1, x2)
     i, j = term
     return (@inbounds x1[i] * x2[j])
 end
