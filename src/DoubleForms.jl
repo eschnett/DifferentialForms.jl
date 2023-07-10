@@ -7,6 +7,7 @@ using StaticArrays
 
 using ..Defs
 using ..Forms
+using ..TensorForms: TensorForms, apply1, apply2, swap
 
 """
 The tensor product of two forms, i.e. the composition of two forms,
@@ -284,8 +285,7 @@ Base.one(::Type{<:DoubleForm{D1,D2}}) where {D1,D2} = one(DoubleForm{D1,D2,0,0})
 Base.one(x::DoubleForm) = one(typeof(x))
 Base.isone(x::DoubleForm{D1,D2,0,0}) where {D1,D2} = isone(x.form)
 
-export swap
-function swap(x::DoubleForm{D1,D2,R1,R2,T}) where {D1,D2,R1,R2,T}
+function TensorForms.swap(x::DoubleForm{D1,D2,R1,R2,T}) where {D1,D2,R1,R2,T}
     N1 = length(Form{D1,R1})
     N2 = length(Form{D2,R2})
     res = SVector{N2,fulltype(Form{D1,R1,T})}(Form{D1,R1,T}(SVector{N1,T}(x.form[n1][n2] for n1 in 1:N1)) for n2 in 1:N2)
