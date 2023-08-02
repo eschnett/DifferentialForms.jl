@@ -22,6 +22,7 @@ using Test
 end
 
 @testset "Create multivectors D=$D" for D in 0:Dmax
+    γ = ntuple(d -> true, D)
     Mbits = 2^D
     Mmax = UInt64(2)^Mbits - 1
 
@@ -29,18 +30,19 @@ end
 
     for iter in 1:(100 ÷ (D + 1))
         M = rand(0:Mmax)
-        N = length(Multivector{D,M})
-        x = Multivector{D,M,T}(SVector{N,T}(rand(T) for n in 1:N))
+        N = length(Multivector{D,γ,M})
+        x = Multivector{D,γ,M,T}(SVector{N,T}(rand(T) for n in 1:N))
         X = typeof(x)
         x′ = X(SVector{N,T}(rand(T) for n in 1:N))
 
-        @test Multivector{D,M,Float64}(x) == Multivector{D,M,Float64}(x.elts)
+        @test Multivector{D,γ,M,Float64}(x) == Multivector{D,γ,M,Float64}(x.elts)
 
-        @test Multivector{D,M,Float64}(collect(x)) == Multivector{D,M,Float64}(x)
+        @test Multivector{D,γ,M,Float64}(collect(x)) == Multivector{D,γ,M,Float64}(x)
     end
 end
 
 @testset "Vector space operations on multivectors D=$D" for D in 0:Dmax
+    γ = ntuple(d -> true, D)
     Mbits = 2^D
     Mmax = UInt64(2)^Mbits - 1
 
@@ -51,10 +53,10 @@ end
         Mx = rand(0:Mmax)
         My = rand(0:Mmax)
         Mz = rand(0:Mmax)
-        n = zero(Multivector{D,Mn,T})
-        x = rand(Multivector{D,Mx,T})
-        y = rand(Multivector{D,My,T})
-        z = rand(Multivector{D,Mz,T})
+        n = zero(Multivector{D,γ,Mn,T})
+        x = rand(Multivector{D,γ,Mx,T})
+        y = rand(Multivector{D,γ,My,T})
+        z = rand(Multivector{D,γ,Mz,T})
         a = rand(T)
         b = rand(T)
 
@@ -107,6 +109,7 @@ end
 end
 
 @testset "Multivector algebra D=$D" for D in 0:Dmax
+    γ = ntuple(d -> true, D)
     Mbits = 2^D
     Mmax = UInt64(2)^Mbits - 1
 
@@ -117,10 +120,10 @@ end
         Mx = rand(0:Mmax)
         My = rand(0:Mmax)
         Mz = rand(0:Mmax)
-        e = one(Multivector{D,Me,T})
-        x = rand(Multivector{D,Mx,T})
-        y = rand(Multivector{D,My,T})
-        z = rand(Multivector{D,Mz,T})
+        e = one(Multivector{D,γ,Me,T})
+        x = rand(Multivector{D,γ,Mx,T})
+        y = rand(Multivector{D,γ,My,T})
+        z = rand(Multivector{D,γ,Mz,T})
         a = rand(T)
         b = rand(T)
 
@@ -128,10 +131,10 @@ end
 
         # units
         if D == 2
-            e = unit(Multivector{D,Me,T})
-            e1 = unit(Multivector{D,UInt64(0b0010),T}, 1)
-            e2 = unit(Multivector{D,UInt64(0b00100),T}, 2)
-            e12 = unit(Multivector{D,UInt64(0b1000),T}, 1, 2)
+            e = unit(Multivector{D,γ,Me,T})
+            e1 = unit(Multivector{D,γ,UInt64(0b0010),T}, 1)
+            e2 = unit(Multivector{D,γ,UInt64(0b00100),T}, 2)
+            e12 = unit(Multivector{D,γ,UInt64(0b1000),T}, 1, 2)
 
             @test ~e == e
             @test ~e1 == e1
@@ -313,10 +316,55 @@ end
     end
 end
 
+@testset "Multivector algebra with arbitrary metrics D=$D" for D in 0:Dmax
+    Mbits = 2^D
+    Mmax = UInt64(2)^Mbits - 1
+
+    T = Rational{Int64}
+
+    for iter in 1:(100 ÷ (D + 1))
+        γ = NTuple{D,Int8}(rand(-1:1, D))
+
+        Me = UInt64(0b1)
+        Mx = rand(0:Mmax)
+        My = rand(0:Mmax)
+        Mz = rand(0:Mmax)
+        e = one(Multivector{D,γ,Me,T})
+        x = rand(Multivector{D,γ,Mx,T})
+        y = rand(Multivector{D,γ,My,T})
+        z = rand(Multivector{D,γ,Mz,T})
+        a = rand(T)
+        b = rand(T)
+
+        # Multiplicative structure
+
+        # units
+        if D == 2
+            e = unit(Multivector{D,γ,Me,T})
+            e1 = unit(Multivector{D,γ,UInt64(0b0010),T}, 1)
+            e2 = unit(Multivector{D,γ,UInt64(0b00100),T}, 2)
+            e12 = unit(Multivector{D,γ,UInt64(0b1000),T}, 1, 2)
+
+            @test e * e == e
+            @test e1 * e1 == γ[1] * e
+            @test e2 * e2 == γ[2] * e
+            @test e * e12 == e12
+            @test e1 * e12 == γ[1] * e2
+            @test e2 * e12 == -γ[2] * e1
+            @test e12 * e1 == -γ[1] * e2
+            @test e12 * e2 == γ[2] * e1
+            @test e12 * e12 == -γ[1] * γ[2] * e
+            @test e12 * ~e12 == γ[1] * γ[2] * e
+        end
+    end
+end
+
 #TODO const Dmax4 = min(4, Dmax)
 #TODO @testset "Tensor sums of multivectors D1=$D1 D2=$D2 R=$R" for D1 in 0:Dmax4,
 #TODO D2 in 0:Dmax4,
 #TODO R in 1:min(D1, D2)
+#TODO 
+#TODO     γ = ntuple(d->true, D)
 #TODO 
 #TODO     D = D1 + D2
 #TODO 
@@ -371,6 +419,8 @@ end
 #TODO D2 in 0:Dmax3,
 #TODO R1 in 0:D1,
 #TODO R2 in 0:D2
+#TODO 
+#TODO     γ = ntuple(d->true, D)
 #TODO 
 #TODO     D = D1 + D2
 #TODO     R = R1 + R2
