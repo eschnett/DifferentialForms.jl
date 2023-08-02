@@ -71,8 +71,10 @@ function Base.show(io::IO, x::Multivector{D,γ,M,T}) where {D,γ,M,T}
     print(io, "⟦")
     isfirst = true
     for n in 1:length(x)
-        isneg = x[n] isa Real && x[n] < 0
-        xval = bitsign(isneg) * x[n]
+        # Comparing symbolic values may not return `Bool`
+        elt = x[n]
+        isneg = elt isa Real && (elt < 0) isa Bool && elt < 0
+        elt = isneg ? -elt : elt
         if isfirst
             if isneg
                 print(io, "- ")
@@ -84,17 +86,18 @@ function Base.show(io::IO, x::Multivector{D,γ,M,T}) where {D,γ,M,T}
                 print(io, " + ")
             end
         end
-        if isone(xval)
+        # Comparing symbolic values may not return `Bool`
+        if isone(elt) isa Bool && isone(elt)
             # output nothing
         else
-            print(io, xval)
-            if xval isa Real
+            print(io, elt)
+            if elt isa Real
                 # output number without multiplication sign
             else
-                print(io, " * ")
+                print(io, " *")
             end
         end
-        print(io, "e")
+        print(io, " e")
         for bit in lin2lst(Val(D), Val(M), n)
             print(io, bit)
         end
