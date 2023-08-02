@@ -62,12 +62,49 @@ end
 # I/O
 
 function Base.show(io::IO, x::Multivector{D,γ,M,T}) where {D,γ,M,T}
-    print(io, "$T⟦")
+    # print(io, "$T⟦")
+    # for n in 1:length(x)
+    #     n > 1 && print(io, ",")
+    #     print(io, x[n])
+    # end
+    # print(io, "⟧{D=$D,γ=$γ,M=0b$(string(M; base = 2))}")
+    print(io, "⟦")
+    isfirst = true
     for n in 1:length(x)
-        n > 1 && print(io, ",")
-        print(io, x[n])
+        isneg = x[n] isa Real && x[n] < 0
+        xval = bitsign(isneg) * x[n]
+        if isfirst
+            if isneg
+                print(io, "- ")
+            end
+        else
+            if isneg
+                print(io, " - ")
+            else
+                print(io, " + ")
+            end
+        end
+        if isone(xval)
+            # output nothing
+        else
+            print(io, xval)
+            if xval isa Real
+                # output number without multiplication sign
+            else
+                print(io, " * ")
+            end
+        end
+        print(io, "e")
+        for bit in lin2lst(Val(D), Val(M), n)
+            print(io, bit)
+        end
+        isfirst = false
     end
-    print(io, "⟧{D=$D,γ=$γ,M=0b$(string(M; base = 2))}")
+    print(io, "⟧{γ=")
+    for s in γ
+        print(io, s == -1 ? "-" : s == 0 ? "0" : s == +1 ? "+" : s)
+    end
+    print(io, "}")
     return nothing
 end
 
