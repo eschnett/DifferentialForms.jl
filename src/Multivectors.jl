@@ -44,8 +44,8 @@ function Multivector{D,γ,M,T}(tup::Tuple) where {D,γ,M,T}
     return Multivector{D,γ,M,T}(SVector{N,T}(tup))
 end
 function Multivector{D,γ,M}(tup::Tuple) where {D,γ,M}
-    N = length(Multivector{D,γ,M})
-    return Multivector{D,γ,M}(SVector{N}(tup))
+    T = promote_type(typeof.(tup)...)
+    return Multivector{D,γ,M,T}(tup)
 end
 function Multivector{D,γ,M}(tup::Tuple{}) where {D,γ,M}
     return error("Cannot create Multivector from emtpy tuple without specifying type")
