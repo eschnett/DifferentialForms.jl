@@ -270,8 +270,8 @@ Defs.unit(F::Type{<:Multivector}, inds::Tuple{}) = unit(F, SVector{0,Int}())
 Defs.unit(F::Type{<:Multivector}, inds::Tuple) = unit(F, SVector(inds))
 Defs.unit(F::Type{<:Multivector}, inds::Integer...) = unit(F, inds)
 
-Base.:+(x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(+x.elts)
-Base.:-(x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(-x.elts)
+Base.:+(x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(Tuple(+x.elts))
+Base.:-(x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(Tuple(-x.elts))
 
 @inline @inbounds function eval_add_term(term::BinaryTerm, x1, x2)
     term.i1 === nothing && return x2.elts[term.i2]
@@ -296,10 +296,10 @@ function Base.:-(x1::Multivector{D,γ,M1}, x2::Multivector{D,γ,M2}) where {D,γ
     return Multivector{D,γ,M}(map(term -> eval_sub_term(term, x1, x2), algorithm))
 end
 
-Base.:*(x::Multivector{D,γ,M}, a) where {D,γ,M} = Multivector{D,γ,M}(x.elts * a)
-Base.:/(x::Multivector{D,γ,M}, a) where {D,γ,M} = Multivector{D,γ,M}(x.elts / a)
-Base.:*(a, x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(a * x.elts)
-Base.:\(a, x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(a \ x.elts)
+Base.:*(x::Multivector{D,γ,M}, a) where {D,γ,M} = Multivector{D,γ,M}(Tuple(x.elts * a))
+Base.:/(x::Multivector{D,γ,M}, a) where {D,γ,M} = Multivector{D,γ,M}(Tuple(x.elts / a))
+Base.:*(a, x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(Tuple(a * x.elts))
+Base.:\(a, x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(Tuple(a \ x.elts))
 
 ################################################################################
 
