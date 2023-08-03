@@ -9,9 +9,9 @@ using ..Defs
 using ..Forms
 
 # Implementations of `zero` and `one` that us a generic fallback
-zero′(::Type{T}) where {T} = hasmethod(zero, Tuple{T}) ? zero(T) : false
+zero′(::Type{T}) where {T} = hasmethod(zero, Tuple{Type{T}}) ? zero(T) : false
 zero′(::Type{SVector{T,N}}) where {T,N} = SVector{T,N}((ntuple(n -> zero′(T), N)))
-one′(::Type{T}) where {T} = hasmethod(one, Tuple{T}) ? one(T) : true
+one′(::Type{T}) where {T} = hasmethod(one, Tuple{Type{T}}) ? one(T) : true
 
 export Multivector
 @computed struct Multivector{D,γ,M,T}
