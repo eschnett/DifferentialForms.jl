@@ -112,10 +112,10 @@ function Base.show(io::IO, x::Multivector{D,γ,M,T}) where {D,γ,M,T}
             if elt isa Real
                 # output number without multiplication sign
             else
-                print(io, " *")
+                print(io, " * ")
             end
         end
-        print(io, " e")
+        print(io, "e")
         for bit in lin2lst(Val(D), Val(M), n)
             print(io, bit)
         end
