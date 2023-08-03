@@ -44,7 +44,9 @@ function Multivector{D,γ,M,T}(tup::Tuple) where {D,γ,M,T}
     return Multivector{D,γ,M,T}(SVector{N,T}(tup))
 end
 function Multivector{D,γ,M}(tup::Tuple) where {D,γ,M}
-    T = promote_type(typeof.(tup)...)
+    T1 = promote_type(typeof.(tup)...)
+    T2 = Union{typeof.(tup)...}
+    T = T2 <: T1 ? T2 : T1
     return Multivector{D,γ,M,T}(tup)
 end
 function Multivector{D,γ,M}(tup::Tuple{}) where {D,γ,M}
@@ -416,7 +418,7 @@ end
 function Base.reverse(x::Multivector{D,γ,M}) where {D,γ,M}
     iszero(M) && return x
     algorithm = reverse_algorithm(Val(D), Val(M))
-    return Multivector{D,γ,M}(map((s, x) -> s ? -x : x, algorithm, x.elts))
+    return Multivector{D,γ,M}(map((s, x) -> s ? -x : x, Tuple(algorithm), Tuple(x.elts)))
 end
 @inline Base.:~(x::Multivector) = reverse(x)
 
@@ -458,7 +460,7 @@ function Forms.hodge(x1::Multivector{D,γ,M1}) where {D,γ,M1}
     M = hodge_mask(Val(D), Val(M1))
     iszero(M) && return zero(Multivector{D,γ,M,eltype(x1)})
     algorithm = hodge_algorithm(Val(D), Val(M1))::SVector
-    return Multivector{D,γ,M}(map(term -> eval_hodge_term(term, x1), algorithm))
+    return Multivector{D,γ,M}(map(term -> eval_hodge_term(term, x1), Tuple(algorithm)))
 end
 
 # invhodge (inv(⋆), inv(\\star))
@@ -500,7 +502,7 @@ function Forms.invhodge(x1::Multivector{D,γ,M1}) where {D,γ,M1}
     M = invhodge_mask(Val(D), Val(M1))
     iszero(M) && return zero(Multivector{D,γ,M,eltype(x1)})
     algorithm = invhodge_algorithm(Val(D), Val(M1))::SVector
-    return Multivector{D,γ,M}(map(term -> eval_invhodge_term(term, x1), algorithm))
+    return Multivector{D,γ,M}(map(term -> eval_invhodge_term(term, x1), Tuple(algorithm)))
 end
 
 # conj
