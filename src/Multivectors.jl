@@ -9,8 +9,14 @@ using ..Defs
 using ..Forms
 
 # Implementations of `zero` and `one` that us a generic fallback
+
+# Julia defines a function `zero(::Type{Any})` that always errors
+zero′(::Type{Any}) = false
 zero′(::Type{T}) where {T} = hasmethod(zero, Tuple{Type{T}}) ? zero(T) : false
 zero′(::Type{SVector{T,N}}) where {T,N} = SVector{T,N}((ntuple(n -> zero′(T), N)))
+
+# Julia defines a function `one(::Type{Any})` that always errors
+one′(::Type{Any}) = true
 one′(::Type{T}) where {T} = hasmethod(one, Tuple{Type{T}}) ? one(T) : true
 
 export Multivector
