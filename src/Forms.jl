@@ -423,22 +423,14 @@ Base.size(::Type{<:Form{D}}, r) where {D} = D
 Base.size(x::Form, r) = size(typeof(x), r)
 
 Base.getindex(x::Form, ind::Integer) = x.elts[ind]
-function Base.getindex(x::Form{D,R}, inds::SVector{R}) where {D,R}
-    return x.elts[lst2lin(Val(D), Val(R), inds)]
-end
+Base.getindex(x::Form{D,R}, inds::SVector{R}) where {D,R} = x.elts[lst2lin(Val(D), Val(R), inds)]
 Base.getindex(x::Form, inds::Tuple{}) = x[SVector{0,Int}()]
 Base.getindex(x::Form, inds::Tuple) = x[SVector(inds)]
 Base.getindex(x::Form, inds::Integer...) = x[inds]
 
-function Base.setindex(x::Form{D,R}, val, ind::Integer) where {D,R}
-    return Form{D,R}(Base.setindex(x.elts, val, ind))
-end
-function Base.setindex(x::Form{D,R}, val, inds::SVector{R}) where {D,R}
-    return Base.setindex(x, val, lst2lin(Val(D), Val(R), inds))
-end
-function Base.setindex(x::Form, val, inds::Tuple{})
-    return Base.setindex(x, val, SVector{0,Int}())
-end
+Base.setindex(x::Form{D,R}, val, ind::Integer) where {D,R} = Form{D,R}(Base.setindex(x.elts, val, ind))
+Base.setindex(x::Form{D,R}, val, inds::SVector{R}) where {D,R} = Base.setindex(x, val, lst2lin(Val(D), Val(R), inds))
+Base.setindex(x::Form, val, inds::Tuple{}) = Base.setindex(x, val, SVector{0,Int}())
 Base.setindex(x::Form, val, inds::Tuple) = Base.setindex(x, val, SVector(inds))
 Base.setindex(x::Form, val, inds::Integer...) = Base.setindex(x, val, inds)
 

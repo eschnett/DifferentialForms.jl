@@ -57,6 +57,15 @@ function Multivector{D,γ,M,T}(f::Multivector{D,γ,M}) where {D,γ,M,T}
     return Multivector{D,γ,M,T}(SVector{N,T}(f.elts))
 end
 
+Forms.fdim(::Type{<:Multivector{D}}) where {D} = D
+Forms.fdim(x::Multivector) = fdim(typeof(x))
+export metric
+metric(::Type{<:Multivector{D,γ}}) where {D,γ} = γ
+metric(x::Multivector) = metric(typeof(x))
+# export elmask
+elmask(::Type{<:Multivector{D,γ,M}}) where {D,γ,M} = M
+elmask(x::Multivector) = elmask(typeof(x))
+
 ################################################################################
 
 # I/O
@@ -72,7 +81,7 @@ function Base.show(io::IO, x::Multivector{D,γ,M,T}) where {D,γ,M,T}
     isfirst = true
     for n in 1:length(x)
         # Comparing symbolic values may not return `Bool`
-        elt = x[n]
+        elt = x.elts[n]
         isneg = elt isa Real && (elt < 0) isa Bool && elt < 0
         elt = isneg ? -elt : elt
         if isfirst
@@ -154,8 +163,8 @@ end
 # Comparisons
 
 @inline @inbounds function eval_eq_term(term::BinaryTerm, x1, x2)
-    x1i1 = term.i1 === nothing ? zero(eltype(x1)) : x1[term.i1]
-    x2i2 = term.i2 === nothing ? zero(eltype(x2)) : x2[term.i2]
+    x1i1 = term.i1 === nothing ? zero(eltype(x1)) : x1.elts[term.i1]
+    x2i2 = term.i2 === nothing ? zero(eltype(x2)) : x2.elts[term.i2]
     return x1i1 == x2i2
 end
 function Base.:(==)(x1::Multivector{D,γ,M1,T1}, x2::Multivector{D,γ,M2,T2}) where {D,γ,M1,M2,T1,T2}
@@ -182,8 +191,42 @@ Base.lastindex(x::Multivector) = lastindex(typeof(x))
 Base.length(::Type{<:Multivector{D,γ,M}}) where {D,γ,M} = count_ones(M)
 Base.length(x::Multivector) = length(typeof(x))
 
-Base.getindex(x::Multivector, ind::Integer) = x.elts[ind]
-Base.setindex(x::Multivector{D,γ,M}, val, ind::Integer) where {D,γ,M} = Multivector{D,γ,M}(Base.setindex(x.elts, val, ind))
+# We do not support linear indexing
+# Base.getindex(x::Multivector, ind::Integer) = x.elts[ind]
+# Base.setindex(x::Multivector{D,γ,M}, val, ind::Integer) where {D,γ,M} = Multivector{D,γ,M}(Base.setindex(x.elts, val, ind))
+
+function Base.getindex(x::Multivector{D,γ,M,T}, inds0::SVector) where {D,γ,M,T}
+    length(inds0) <= D || throw(ArgumentError("Too many indices for $D-dimensionional multivector"))
+    all(0 .< inds0 .<= D) || throw(BoundsError(x, inds0))
+    inds, parity = sort_perm(inds0)
+    for r in 2:length(inds)
+        inds[r] == inds[r - 1] && return zero(T)
+    end
+    lin = lst2lin(Val(D), Val(M), inds)
+    lin == 0 && return zero(T)
+    val = x.elts[lin]
+    val = iseven(parity) ? val : -val
+    return val
+end
+Base.getindex(x::Multivector, inds::Tuple{}) = x[SVector{0,Int}()]
+Base.getindex(x::Multivector, inds::Tuple) = x[SVector(inds)]
+Base.getindex(x::Multivector, inds::Integer...) = x[inds]
+
+function Base.setindex(x::Multivector{D,γ,M,T}, val, inds0::SVector) where {D,γ,M,T}
+    length(inds0) <= D || throw(ArgumentError("Too many indices for $D-dimensionional multivector"))
+    all(0 .< inds0 .<= D) || throw(BoundsError(x, inds0))
+    inds, parity = sort_perm(inds0)
+    for r in 2:length(inds)
+        inds[r] == inds[r - 1] && throw(ArgumentError("Multivector is antisymmetric and does not have index $inds0"))
+    end
+    lin = lst2lin(Val(D), Val(M), inds)
+    lin == 0 && throw(ArgumentError("Multivector does not store index $inds"))
+    val = iseven(parity) ? val : -val
+    return Multivector{D,γ,M,T}(Base.setindex(x.elts, val, lin))
+end
+Base.setindex(x::Multivector, val, inds::Tuple{}) = Base.setindex(x, val, SVector{0,Int}())
+Base.setindex(x::Multivector, val, inds::Tuple) = Base.setindex(x, val, SVector(inds))
+Base.setindex(x::Multivector, val, inds::Integer...) = Base.setindex(x, val, inds)
 
 function Base.map(f, x::Multivector{D,γ,M}, ys::Multivector{D,γ,M}...) where {D,γ,M}
     return Multivector{D,γ,M}(map(f, x.elts, map(y -> y.elts, ys)...))
@@ -229,9 +272,9 @@ Base.:+(x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(+x.elts)
 Base.:-(x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(-x.elts)
 
 @inline @inbounds function eval_add_term(term::BinaryTerm, x1, x2)
-    term.i1 === nothing && return x2[term.i2]
-    term.i2 === nothing && return x1[term.i1]
-    return x1[term.i1] + x2[term.i2]
+    term.i1 === nothing && return x2.elts[term.i2]
+    term.i2 === nothing && return x1.elts[term.i1]
+    return x1.elts[term.i1] + x2.elts[term.i2]
 end
 function Base.:+(x1::Multivector{D,γ,M1}, x2::Multivector{D,γ,M2}) where {D,γ,M1,M2}
     M = M1 | M2
@@ -240,9 +283,9 @@ function Base.:+(x1::Multivector{D,γ,M1}, x2::Multivector{D,γ,M2}) where {D,γ
     return Multivector{D,γ,M}(map(term -> eval_add_term(term, x1, x2), algorithm))
 end
 @inline @inbounds function eval_sub_term(term::BinaryTerm, x1, x2)
-    term.i1 === nothing && return -x2[term.i2]
-    term.i2 === nothing && return x1[term.i1]
-    return x1[term.i1] - x2[term.i2]
+    term.i1 === nothing && return -x2.elts[term.i2]
+    term.i2 === nothing && return x1.elts[term.i1]
+    return x1.elts[term.i1] - x2.elts[term.i2]
 end
 function Base.:-(x1::Multivector{D,γ,M1}, x2::Multivector{D,γ,M2}) where {D,γ,M1,M2}
     M = M1 | M2
@@ -397,8 +440,7 @@ end
     for n1 in 1:N1
         bits1 = lin2bit(Val(D), Val(M1), n1)
         bitsr = .~bits1
-        _, parity = sort_perm([bit2lst(Val(D), bits1)
-                               bit2lst(Val(D), bitsr)])
+        _, parity = sort_perm([bit2lst(Val(D), bits1); bit2lst(Val(D), bitsr)])
         s = isodd(parity)
         ind = bit2lin(Val(D), Val(M), bitsr)
         elts[ind] = (s, n1)
@@ -408,7 +450,7 @@ end
 end
 @inline @inbounds function eval_hodge_term(term::Tuple{Bool,Int}, x1)
     s, i = term
-    return bitsign(s) * x1[i]
+    return bitsign(s) * x1.elts[i]
 end
 function Forms.hodge(x1::Multivector{D,γ,M1}) where {D,γ,M1}
     @assert 0 <= D
@@ -440,8 +482,7 @@ end
         bits1 = lin2bit(Val(D), Val(M1), n1)
         bitsr = .~bits1
         # The "opposite" parity as `hodge`
-        _, parity = sort_perm([bit2lst(Val(D), bitsr)
-                               bit2lst(Val(D), bits1)])
+        _, parity = sort_perm([bit2lst(Val(D), bitsr); bit2lst(Val(D), bits1)])
         s = isodd(parity)
         ind = bit2lin(Val(D), Val(M), bitsr)
         elts[ind] = (s, n1)
@@ -451,7 +492,7 @@ end
 end
 @inline @inbounds function eval_invhodge_term(term::Tuple{Bool,Int}, x1)
     s, i = term
-    return bitsign(s) * x1[i]
+    return bitsign(s) * x1.elts[i]
 end
 function Forms.invhodge(x1::Multivector{D,γ,M1}) where {D,γ,M1}
     @assert 0 <= D
@@ -510,8 +551,7 @@ end
         if !any(bits1 .& bits2)
             bitsr = bits1 .| bits2
             @assert getbit(M, bits2uint(bitsr))
-            _, parity = sort_perm([bit2lst(Val(D), bits1)
-                                   bit2lst(Val(D), bits2)])
+            _, parity = sort_perm([bit2lst(Val(D), bits1); bit2lst(Val(D), bits2)])
             s = isodd(parity)
             ind = bit2lin(Val(D), Val(M), bitsr)
             push!(elts[ind], WedgeTerm(s, n1, n2))
@@ -524,10 +564,10 @@ end
     U = typeof(one(eltype(x1)) * one(eltype(x2)))
     N == 0 && return zero(U)
     term = elt.terms[1]
-    r = bitsign(term.sign) * x1[term.n1] * x2[term.n2]
+    r = bitsign(term.sign) * x1.elts[term.n1] * x2.elts[term.n2]
     for n in 2:N
         term = elt.terms[n]
-        r += bitsign(term.sign) * x1[term.n1] * x2[term.n2]
+        r += bitsign(term.sign) * x1.elts[term.n1] * x2.elts[term.n2]
     end
     return r
 end
@@ -573,7 +613,7 @@ end
 
 @inline function Forms.norm2(x::Multivector{D,γ,M}) where {D,γ,M}
     iszero(M) && return zero(eltype(x))
-    return (x ⋅ x)[1]
+    return (x ⋅ x)[]
 end
 @inline LinearAlgebra.norm(x::Multivector) = sqrt(norm2(x))
 
@@ -621,8 +661,7 @@ end
         bits2 = lin2bit(Val(D), Val(M2), n2)
         bitsr = (bits1 .| bits2) .& .~(bits1 .& bits2)
         @assert getbit(M, bits2uint(bitsr))
-        _, parity = sort_perm([bit2lst(Val(D), bits1)
-                               bit2lst(Val(D), bits2)])
+        _, parity = sort_perm([bit2lst(Val(D), bits1); bit2lst(Val(D), bits2)])
         s = isodd(parity)
         f = prod(γ[bit] for bit in bit2lst(Val(D), bits1 .& bits2); init=1)
         if f != 0
@@ -638,10 +677,10 @@ end
     U = typeof(one(eltype(x1)) * one(eltype(x2)))
     N == 0 && return zero(U)
     term = elt.terms[1]
-    r = term.factor * x1[term.n1] * x2[term.n2]
+    r = term.factor * x1.elts[term.n1] * x2.elts[term.n2]
     for n in 2:N
         term = elt.terms[n]
-        r += term.factor * x1[term.n1] * x2[term.n2]
+        r += term.factor * x1.elts[term.n1] * x2.elts[term.n2]
     end
     return r
 end

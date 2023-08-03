@@ -316,6 +316,66 @@ end
     end
 end
 
+@testset "Multivector element access D=$D" for D in 0:Dmax
+    γ = ntuple(d -> true, D)
+    Mbits = 2^D
+    Mmax = UInt64(2)^Mbits - 1
+
+    T = Rational{Int64}
+
+    for iter in 1:(100 ÷ (D + 1))
+        Me = UInt64(0b1)
+        Mx = rand(0:Mmax)
+        My = rand(0:Mmax)
+        Mz = rand(0:Mmax)
+        e = one(Multivector{D,γ,Me,T})
+        x = rand(Multivector{D,γ,Mx,T})
+        y = rand(Multivector{D,γ,My,T})
+        z = rand(Multivector{D,γ,Mz,T})
+        a = rand(T)
+        b = rand(T)
+
+        # Multiplicative structure
+
+        # units
+        if D == 2
+            e = unit(Multivector{D,γ,Me,T})
+            e1 = unit(Multivector{D,γ,UInt64(0b0010),T}, 1)
+            e2 = unit(Multivector{D,γ,UInt64(0b00100),T}, 2)
+            e12 = unit(Multivector{D,γ,UInt64(0b1000),T}, 1, 2)
+
+            @test e[] == 1
+            @test e[1] == 0
+            @test e[2] == 0
+            @test e[1,2] == 0
+            @test e[2,1] == 0
+
+            @test e1[] == 0
+            @test e1[1] == 1
+            @test e1[2] == 0
+            @test e1[1,2] == 0
+            @test e1[2,1] == 0
+
+            @test e2[] == 0
+            @test e2[1] == 0
+            @test e2[2] == 1
+            @test e2[1,2] == 0
+            @test e2[2,1] == 0
+
+            @test e12[] == 0
+            @test e12[1] == 0
+            @test e12[2] == 0
+            @test e12[1,2] == 1
+            @test e12[2,1] == -1
+
+            @test setindex(e, 1//2) == e/2
+            @test setindex(e1, 1//2, 1) == e1/2
+            @test setindex(e2, 1//2, 2) == e2/2
+            @test setindex(e12, -1//2, 2,1) == e12/2
+        end
+    end
+end
+
 @testset "Multivector algebra with arbitrary metrics D=$D" for D in 0:Dmax
     Mbits = 2^D
     Mmax = UInt64(2)^Mbits - 1
