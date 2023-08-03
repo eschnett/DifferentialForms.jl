@@ -35,7 +35,7 @@ Multivector{D,γ,M,T,X}(args...) where {D,M,T,γ,X} = Multivector{D,γ,M,T}(args
 const IteratorTypes = Union{Base.Generator,Iterators.Flatten}
 function Multivector{D,γ,M,T}(gen::IteratorTypes) where {D,γ,M,T}
     N = length(Multivector{D,γ,M})
-    return Multivector{D,γ,M,T}(SVector{N,T}(elts))
+    return Multivector{D,γ,M,T}(SVector{N,T}(gen))
 end
 function Multivector{D,γ,M}(gen::IteratorTypes) where {D,γ,M}
     @assert IteratorEltype(typeof(gen)) == HasEltype()
@@ -49,9 +49,7 @@ function Multivector{D,γ,M,T}(tup::Tuple) where {D,γ,M,T}
     return Multivector{D,γ,M,T}(SVector{N,T}(tup))
 end
 function Multivector{D,γ,M}(tup::Tuple) where {D,γ,M}
-    T1 = promote_type(typeof.(tup)...)
-    T2 = Union{typeof.(tup)...}
-    T = T2 <: T1 ? T2 : T1
+    T = promote_type(typeof.(tup)...)
     return Multivector{D,γ,M,T}(tup)
 end
 function Multivector{D,γ,M}(tup::Tuple{}) where {D,γ,M}
@@ -303,6 +301,7 @@ end
 
 Base.:*(x::Multivector{D,γ,M}, a) where {D,γ,M} = Multivector{D,γ,M}(x.elts * a)
 Base.:/(x::Multivector{D,γ,M}, a) where {D,γ,M} = Multivector{D,γ,M}(x.elts / a)
+Base.://(x::Multivector{D,γ,M}, a) where {D,γ,M} = Multivector{D,γ,M}(x.elts // a)
 Base.:*(a, x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(a * x.elts)
 Base.:\(a, x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(a \ x.elts)
 
