@@ -8,12 +8,10 @@ using StaticArrays
 using ..Defs
 using ..Forms
 
-# Implementations of `zero` and `one` that accept the type `Any` as input
-zero′(::Type{Any}) = false
-zero′(::Type{T}) where {T} = zero(T)
+# Implementations of `zero` and `one` that us a generic fallback
+zero′(::Type{T}) where {T} = hasmethod(zero, Tuple{T}) ? zero(T) : false
 zero′(::Type{SVector{T,N}}) where {T,N} = SVector{T,N}((ntuple(n -> zero′(T), N)))
-one′(::Type{Any}) = true
-one′(::Type{T}) where {T} = one(T)
+one′(::Type{T}) where {T} = hasmethod(one, Tuple{T}) ? one(T) : true
 
 export Multivector
 @computed struct Multivector{D,γ,M,T}
