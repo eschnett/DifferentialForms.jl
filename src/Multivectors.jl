@@ -8,6 +8,13 @@ using StaticArrays
 using ..Defs
 using ..Forms
 
+# Implementations of `zero` and `one` that accept the type `Any` as input
+zero′(::Type{Any}) = false
+zero′(::Type{T}) where {T} = zero(T)
+zero′(::Type{SVector{T,N}}) where {T,N} = SVector{T,N}((ntuple(n -> zero′(T), N)))
+one′(::Type{Any}) = true
+one′(::Type{T}) where {T} = one(T)
+
 export Multivector
 @computed struct Multivector{D,γ,M,T}
     elts::SVector{numelts(Val(D), Val(M)),T}
@@ -165,8 +172,8 @@ end
 # Comparisons
 
 @inline @inbounds function eval_eq_term(term::BinaryTerm, x1, x2)
-    x1i1 = term.i1 === nothing ? zero(eltype(x1)) : x1.elts[term.i1]
-    x2i2 = term.i2 === nothing ? zero(eltype(x2)) : x2.elts[term.i2]
+    x1i1 = term.i1 === nothing ? zero′(eltype(x1)) : x1.elts[term.i1]
+    x2i2 = term.i2 === nothing ? zero′(eltype(x2)) : x2.elts[term.i2]
     return x1i1 == x2i2
 end
 function Base.:(==)(x1::Multivector{D,γ,M1,T1}, x2::Multivector{D,γ,M2,T2}) where {D,γ,M1,M2,T1,T2}
@@ -202,10 +209,10 @@ function Base.getindex(x::Multivector{D,γ,M,T}, inds0::SVector) where {D,γ,M,T
     all(0 .< inds0 .<= D) || throw(BoundsError(x, inds0))
     inds, parity = sort_perm(inds0)
     for r in 2:length(inds)
-        inds[r] == inds[r - 1] && return zero(T)
+        inds[r] == inds[r - 1] && return zero′(T)
     end
     lin = lst2lin(Val(D), Val(M), inds)
-    lin == 0 && return zero(T)
+    lin == 0 && return zero′(T)
     val = x.elts[lin]
     val = iseven(parity) ? val : -val
     return val
@@ -257,7 +264,7 @@ function Base.zero(::Type{<:Multivector{D,γ,M}}) where {D,γ,M}
 end
 Base.zero(::Type{<:Multivector{D,γ}}) where {D,γ} = zero(Multivector{D,γ,UInt64(0)})
 Base.zero(::Type{<:Multivector{D}}) where {D} = zero(Multivector{D,ntuple(d -> true, D),UInt64(0)})
-Base.zero(x::Multivector) = zero(typeof(x))
+Base.zero(x::Multivector) = zero′(typeof(x))
 
 function Defs.unit(::Type{<:Multivector{D,γ,M,T}}, inds::SVector{N,<:Integer}) where {D,γ,M,T,N}
     M::Unsigned
@@ -270,8 +277,8 @@ Defs.unit(F::Type{<:Multivector}, inds::Tuple{}) = unit(F, SVector{0,Int}())
 Defs.unit(F::Type{<:Multivector}, inds::Tuple) = unit(F, SVector(inds))
 Defs.unit(F::Type{<:Multivector}, inds::Integer...) = unit(F, inds)
 
-Base.:+(x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(Tuple(+x.elts))
-Base.:-(x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(Tuple(-x.elts))
+Base.:+(x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(+x.elts)
+Base.:-(x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(-x.elts)
 
 @inline @inbounds function eval_add_term(term::BinaryTerm, x1, x2)
     term.i1 === nothing && return x2.elts[term.i2]
@@ -280,7 +287,7 @@ Base.:-(x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(Tuple(-x.el
 end
 function Base.:+(x1::Multivector{D,γ,M1}, x2::Multivector{D,γ,M2}) where {D,γ,M1,M2}
     M = M1 | M2
-    iszero(M) && return Multivector{D,γ,M,typeof(zero(eltype(x1)) + zero(eltype(x2)))}(())
+    iszero(M) && return Multivector{D,γ,M,typeof(zero′(eltype(x1)) + zero′(eltype(x2)))}(())
     algorithm = binary_algorithm(Val(D), Val(M1), Val(M2))
     return Multivector{D,γ,M}(map(term -> eval_add_term(term, x1, x2), algorithm))
 end
@@ -291,15 +298,15 @@ end
 end
 function Base.:-(x1::Multivector{D,γ,M1}, x2::Multivector{D,γ,M2}) where {D,γ,M1,M2}
     M = M1 | M2
-    iszero(M) && return Multivector{D,γ,M,typeof(zero(eltype(x1)) - zero(eltype(x2)))}(())
+    iszero(M) && return Multivector{D,γ,M,typeof(zero′(eltype(x1)) - zero′(eltype(x2)))}(())
     algorithm = binary_algorithm(Val(D), Val(M1), Val(M2))
     return Multivector{D,γ,M}(map(term -> eval_sub_term(term, x1, x2), algorithm))
 end
 
-Base.:*(x::Multivector{D,γ,M}, a) where {D,γ,M} = Multivector{D,γ,M}(Tuple(x.elts * a))
-Base.:/(x::Multivector{D,γ,M}, a) where {D,γ,M} = Multivector{D,γ,M}(Tuple(x.elts / a))
-Base.:*(a, x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(Tuple(a * x.elts))
-Base.:\(a, x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(Tuple(a \ x.elts))
+Base.:*(x::Multivector{D,γ,M}, a) where {D,γ,M} = Multivector{D,γ,M}(x.elts * a)
+Base.:/(x::Multivector{D,γ,M}, a) where {D,γ,M} = Multivector{D,γ,M}(x.elts / a)
+Base.:*(a, x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(a * x.elts)
+Base.:\(a, x::Multivector{D,γ,M}) where {D,γ,M} = Multivector{D,γ,M}(a \ x.elts)
 
 ################################################################################
 
@@ -418,7 +425,7 @@ end
 function Base.reverse(x::Multivector{D,γ,M}) where {D,γ,M}
     iszero(M) && return x
     algorithm = reverse_algorithm(Val(D), Val(M))
-    return Multivector{D,γ,M}(map((s, x) -> s ? -x : x, Tuple(algorithm), Tuple(x.elts)))
+    return Multivector{D,γ,M}(map((s, x) -> s ? -x : x, algorithm, x.elts))
 end
 @inline Base.:~(x::Multivector) = reverse(x)
 
@@ -460,7 +467,7 @@ function Forms.hodge(x1::Multivector{D,γ,M1}) where {D,γ,M1}
     M = hodge_mask(Val(D), Val(M1))
     iszero(M) && return zero(Multivector{D,γ,M,eltype(x1)})
     algorithm = hodge_algorithm(Val(D), Val(M1))::SVector
-    return Multivector{D,γ,M}(map(term -> eval_hodge_term(term, x1), Tuple(algorithm)))
+    return Multivector{D,γ,M}(map(term -> eval_hodge_term(term, x1), algorithm))
 end
 
 # invhodge (inv(⋆), inv(\\star))
@@ -502,7 +509,7 @@ function Forms.invhodge(x1::Multivector{D,γ,M1}) where {D,γ,M1}
     M = invhodge_mask(Val(D), Val(M1))
     iszero(M) && return zero(Multivector{D,γ,M,eltype(x1)})
     algorithm = invhodge_algorithm(Val(D), Val(M1))::SVector
-    return Multivector{D,γ,M}(map(term -> eval_invhodge_term(term, x1), Tuple(algorithm)))
+    return Multivector{D,γ,M}(map(term -> eval_invhodge_term(term, x1), algorithm))
 end
 
 # conj
@@ -563,8 +570,8 @@ end
     return Tuple(elts)
 end
 @inline @inbounds function eval_wedge_elt(elt::WedgeElt{N}, x1, x2) where {N}
-    U = typeof(one(eltype(x1)) * one(eltype(x2)))
-    N == 0 && return zero(U)
+    U = typeof(one′(eltype(x1)) * one′(eltype(x2)))
+    N == 0 && return zero′(U)
     term = elt.terms[1]
     r = bitsign(term.sign) * x1.elts[term.n1] * x2.elts[term.n2]
     for n in 2:N
@@ -578,7 +585,7 @@ function Forms.wedge(x1::Multivector{D,γ,M1}, x2::Multivector{D,γ,M2}) where {
     M1::Unsigned
     M2::Unsigned
     M = wedge_mask(Val(D), Val(M1), Val(M2))
-    iszero(M) && return zero(Multivector{D,γ,M,typeof(one(eltype(x1)) * one(eltype(x2)))})
+    iszero(M) && return zero(Multivector{D,γ,M,typeof(one′(eltype(x1)) * one′(eltype(x2)))})
     algorithm = wedge_algorithm(Val(D), Val(M1), Val(M2))::Tuple
     return Multivector{D,γ,M}(map(elt -> eval_wedge_elt(elt, x1, x2), algorithm))
 end
@@ -614,7 +621,7 @@ end
 @inline LinearAlgebra.dot(x1::Multivector, x2::Multivector) = x1 ∨ ⋆x2
 
 @inline function Forms.norm2(x::Multivector{D,γ,M}) where {D,γ,M}
-    iszero(M) && return zero(eltype(x))
+    iszero(M) && return zero′(eltype(x))
     return (x ⋅ x)[]
 end
 @inline LinearAlgebra.norm(x::Multivector) = sqrt(norm2(x))
@@ -676,8 +683,8 @@ end
     return Tuple(elts)
 end
 @inline @inbounds function eval_mul_elt(elt::MulElt{N}, x1, x2) where {N}
-    U = typeof(one(eltype(x1)) * one(eltype(x2)))
-    N == 0 && return zero(U)
+    U = typeof(one′(eltype(x1)) * one′(eltype(x2)))
+    N == 0 && return zero′(U)
     term = elt.terms[1]
     r = term.factor * x1.elts[term.n1] * x2.elts[term.n2]
     for n in 2:N
@@ -691,7 +698,7 @@ function Base.:*(x1::Multivector{D,γ,M1}, x2::Multivector{D,γ,M2}) where {D,γ
     M1::Unsigned
     M2::Unsigned
     M = mul_mask(Val(D), Val(M1), Val(M2))
-    iszero(M) && return zero(Multivector{D,γ,M,typeof(one(eltype(x1)) * one(eltype(x2)))})
+    iszero(M) && return zero(Multivector{D,γ,M,typeof(one′(eltype(x1)) * one′(eltype(x2)))})
     algorithm = mul_algorithm(Val(D), Val(γ), Val(M1), Val(M2))::Tuple
     return Multivector{D,γ,M}(map(elt -> eval_mul_elt(elt, x1, x2), algorithm))
 end
