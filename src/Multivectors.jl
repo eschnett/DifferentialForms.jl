@@ -8,7 +8,7 @@ using StaticArrays
 using ..Defs
 using ..Forms
 
-# Implementations of `zero` and `one` that us a generic fallback
+# Implementations of `zero` and `one` that use a generic fallback
 
 # Julia defines a function `zero(::Type{Any})` that always errors
 zero′(::Type{Any}) = false
@@ -16,14 +16,14 @@ zero′(::Type{T}) where {T} = hasmethod(zero, Tuple{Type{T}}) ? zero(T) : false
 zero′(::Type{SVector{T,N}}) where {T,N} = SVector{T,N}((ntuple(n -> zero′(T), N)))
 
 # Assume that `iszero` only works when `zero` is defined
-iszero′(x::T) where {T} = hasmethod(zero, Tuple{T}) ? iszero(T) : false
+iszero′(x::T) where {T} = hasmethod(zero, Tuple{T}) ? iszero(x) : false
 
 # Julia defines a function `one(::Type{Any})` that always errors
 one′(::Type{Any}) = true
 one′(::Type{T}) where {T} = hasmethod(one, Tuple{Type{T}}) ? one(T) : true
 
 # Assume that `isone` only works when `one` is defined
-isone′(x::T) where {T} = hasmethod(one, Tuple{T}) ? isone(T) : false
+isone′(x::T) where {T} = hasmethod(one, Tuple{T}) ? isone(x) : false
 
 export Multivector
 @computed struct Multivector{D,γ,M,T}
