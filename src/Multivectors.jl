@@ -15,9 +15,15 @@ zero′(::Type{Any}) = false
 zero′(::Type{T}) where {T} = hasmethod(zero, Tuple{Type{T}}) ? zero(T) : false
 zero′(::Type{SVector{T,N}}) where {T,N} = SVector{T,N}((ntuple(n -> zero′(T), N)))
 
+# Assume that `iszero` only works when `zero` is defined
+iszero′(x::T) where {T} = hasmethod(zero, Tuple{T}) ? iszero(T) : false
+
 # Julia defines a function `one(::Type{Any})` that always errors
 one′(::Type{Any}) = true
 one′(::Type{T}) where {T} = hasmethod(one, Tuple{Type{T}}) ? one(T) : true
+
+# Assume that `isone` only works when `one` is defined
+isone′(x::T) where {T} = hasmethod(one, Tuple{T}) ? isone(T) : false
 
 export Multivector
 @computed struct Multivector{D,γ,M,T}
@@ -107,7 +113,7 @@ function Base.show(io::IO, x::Multivector{D,γ,M,T}) where {D,γ,M,T}
             end
         end
         # Comparing symbolic values may not return `Bool`
-        if isone(elt) isa Bool && isone(elt)
+        if isone′(elt) isa Bool && isone′(elt)
             # output nothing
         else
             print(io, elt)
@@ -187,7 +193,7 @@ function Base.:(==)(x1::Multivector{D,γ,M1,T1}, x2::Multivector{D,γ,M2,T2}) wh
 end
 # Base.:(==)(x1::Multivector{D,γ}, x2::Multivector{D,γ}) where {D,γ} = all(iszero, x1 - x2)
 Base.isequal(x1::Multivector{D,γ,M}, x2::Multivector{D,γ,M}) where {D,γ,M} = isequal(x1.elts, x2.elts)
-Base.hash(x1::Multivector, h::UInt) = hash(UInt(0x60671434), hash(D, hash(γ, hash(M, hash(x1.elts, h)))))
+Base.hash(x1::Multivector{D,γ,M}, h::UInt) where {D,γ,M} = hash(UInt(0x60671434), hash(D, hash(γ, hash(M, hash(x1.elts, h)))))
 
 ################################################################################
 
